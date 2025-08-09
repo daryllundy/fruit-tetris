@@ -270,8 +270,20 @@ class TetrisRenderer {
         this.nextCtx = this.nextCanvas.getContext('2d');
         
         this.blockSize = 30;
-        this.gridColor = 'rgba(255, 255, 255, 0.1)';
-        this.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+        
+        // Fruit-themed background colors for different levels
+        this.levelBackgrounds = [
+            { color: '#4a1f5c', name: 'Grape Garden' },        // Level 1 - Purple
+            { color: '#8B4513', name: 'Kiwi Forest' },         // Level 2 - Brown/Green
+            { color: '#FF6B35', name: 'Orange Grove' },        // Level 3 - Orange
+            { color: '#DC143C', name: 'Strawberry Fields' },   // Level 4 - Red
+            { color: '#FFD700', name: 'Banana Beach' },        // Level 5 - Yellow
+            { color: '#98D8C8', name: 'Watermelon Wave' },     // Level 6 - Light Green
+            { color: '#FF1493', name: 'Dragon Fruit Desert' }, // Level 7 - Pink
+            { color: '#8B008B', name: 'Plum Paradise' },       // Level 8 - Dark Purple
+            { color: '#228B22', name: 'Apple Orchard' },       // Level 9 - Green
+            { color: '#4169E1', name: 'Blueberry Sky' }        // Level 10+ - Blue
+        ];
         
         this.setupCanvases();
     }
@@ -310,15 +322,11 @@ class TetrisRenderer {
     }
     
     renderMainGame() {
-        // Clear canvas
-        this.ctx.fillStyle = this.backgroundColor;
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        // Draw level-based background
+        this.drawLevelBackground();
         
-        // Draw grid
-        this.drawGrid();
-        
-        // Draw placed pieces
-        this.drawGrid();
+        // Draw placed blocks (no grid)
+        this.drawPlacedBlocks();
         
         // Draw ghost piece
         if (this.game.ghostPiece && this.game.settings.showGhost) {
@@ -336,28 +344,40 @@ class TetrisRenderer {
         }
     }
     
-    drawGrid() {
-        // Draw grid lines
-        this.ctx.strokeStyle = this.gridColor;
-        this.ctx.lineWidth = 1;
+    drawLevelBackground() {
+        const levelIndex = Math.min(this.game.level - 1, this.levelBackgrounds.length - 1);
+        const background = this.levelBackgrounds[Math.max(0, levelIndex)];
         
-        // Vertical lines
-        for (let x = 0; x <= this.game.BOARD_WIDTH; x++) {
-            this.ctx.beginPath();
-            this.ctx.moveTo(x * this.blockSize, 0);
-            this.ctx.lineTo(x * this.blockSize, this.canvas.height);
-            this.ctx.stroke();
+        // Create gradient background
+        const gradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
+        gradient.addColorStop(0, background.color);
+        gradient.addColorStop(1, this.adjustBrightness(background.color, -30));
+        
+        this.ctx.fillStyle = gradient;
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Add subtle pattern overlay
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        for (let y = 0; y < this.canvas.height; y += 60) {
+            for (let x = 0; x < this.canvas.width; x += 60) {
+                if ((x + y) % 120 === 0) {
+                    this.ctx.fillRect(x, y, 30, 30);
+                }
+            }
         }
-        
-        // Horizontal lines
-        for (let y = 0; y <= this.game.BOARD_HEIGHT; y++) {
-            this.ctx.beginPath();
-            this.ctx.moveTo(0, y * this.blockSize);
-            this.ctx.lineTo(this.canvas.width, y * this.blockSize);
-            this.ctx.stroke();
-        }
-        
-        // Draw placed blocks
+    }
+    
+    adjustBrightness(color, percent) {
+        const num = parseInt(color.replace('#', ''), 16);
+        const amt = Math.round(2.55 * percent);
+        const R = Math.max(0, Math.min(255, (num >> 16) + amt));
+        const G = Math.max(0, Math.min(255, (num >> 8 & 0x00FF) + amt));
+        const B = Math.max(0, Math.min(255, (num & 0x0000FF) + amt));
+        return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+    }
+    
+    drawPlacedBlocks() {
+        // Draw only the placed blocks without grid lines
         for (let y = 0; y < this.game.BOARD_HEIGHT; y++) {
             for (let x = 0; x < this.game.BOARD_WIDTH; x++) {
                 if (this.game.grid[y][x] !== 0) {
@@ -381,31 +401,28 @@ class TetrisRenderer {
         const pixelY = y * this.blockSize;
         
         if (isGhost) {
-            // Draw ghost piece with transparency
-            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-            this.ctx.fillRect(pixelX + 1, pixelY + 1, this.blockSize - 2, this.blockSize - 2);
-            
-            this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-            this.ctx.lineWidth = 2;
-            this.ctx.strokeRect(pixelX + 1, pixelY + 1, this.blockSize - 2, this.blockSize - 2);
-        } else {
-            // Draw solid block with emoji
-            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-            this.ctx.fillRect(pixelX + 1, pixelY + 1, this.blockSize - 2, this.blockSize - 2);
-            
-            // Draw emoji
+            // Draw ghost piece - just transparent emoji
+            this.ctx.save();
+            this.ctx.globalAlpha = 0.3;
             this.ctx.fillStyle = 'white';
+            const emoji = blockData.emoji || blockData;
+            this.ctx.font = `${this.blockSize - 4}px Arial`;
+            this.ctx.fillText(
+                emoji,
+                pixelX + this.blockSize / 2,
+                pixelY + this.blockSize / 2
+            );
+            this.ctx.restore();
+        } else {
+            // Draw emoji directly without background or border
+            this.ctx.fillStyle = 'white';
+            this.ctx.font = `${this.blockSize - 4}px Arial`;
             const emoji = blockData.emoji || blockData;
             this.ctx.fillText(
                 emoji,
                 pixelX + this.blockSize / 2,
                 pixelY + this.blockSize / 2
             );
-            
-            // Draw border
-            this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-            this.ctx.lineWidth = 1;
-            this.ctx.strokeRect(pixelX + 1, pixelY + 1, this.blockSize - 2, this.blockSize - 2);
         }
     }
     
