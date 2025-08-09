@@ -140,15 +140,14 @@ body {
 
 .game-area {
     position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    display: inline-block;
 }
 
 #game-canvas {
     border: 3px solid rgba(255,255,255,0.3);
     border-radius: 10px;
     background: rgba(0,0,0,0.7);
+    display: block;
 }
 
 #hold-canvas, #next-canvas {
@@ -160,15 +159,15 @@ body {
 /* Game Overlay */
 #game-overlay {
     position: absolute;
-    top: 3px;
-    left: 3px;
-    width: calc(100% - 6px);
-    height: calc(100% - 6px);
-    background: rgba(0,0,0,0.85);
+    top: 0;
+    left: 0;
+    width: 300px;
+    height: 600px;
+    background: rgba(0,0,0,0.9);
     display: flex;
     justify-content: center;
     align-items: center;
-    border-radius: 7px;
+    border-radius: 10px;
     z-index: 10;
 }
 
@@ -297,6 +296,12 @@ body {
         max-width: 100%;
     }
     
+    /* Update overlay size to match canvas */
+    #game-overlay {
+        width: min(300px, calc(100vw - 2rem));
+        height: min(600px, calc(100vh - 300px));
+    }
+    
     #hold-canvas, #next-canvas {
         width: 80px;
         height: auto;
@@ -364,6 +369,12 @@ body {
 
 @media (max-width: 480px) {
     #game-canvas {
+        width: min(250px, calc(100vw - 2rem));
+        height: min(500px, calc(100vh - 250px));
+    }
+    
+    /* Update overlay for smaller screens */
+    #game-overlay {
         width: min(250px, calc(100vw - 2rem));
         height: min(500px, calc(100vh - 250px));
     }
@@ -463,6 +474,12 @@ body {
     }
     
     #game-canvas {
+        width: min(350px, 50vh);
+        height: min(700px, 90vh);
+    }
+    
+    /* Update overlay for landscape */
+    #game-overlay {
         width: min(350px, 50vh);
         height: min(700px, 90vh);
     }
