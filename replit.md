@@ -34,9 +34,12 @@ Preferred communication style: Simple, everyday language.
 - **Game State Isolation**: Core game state managed within vanilla JS classes, UI state managed by React
 
 ### Input System
-- **Multi-Modal Controls**: Support for keyboard, touch, and on-screen buttons
-- **Touch Gestures**: Swipe detection for mobile gameplay (left/right movement, down for soft drop)
+- **Multi-Modal Controls**: Support for keyboard, touch, and enhanced on-screen buttons
+- **Touch Gestures**: Comprehensive swipe detection (left/right movement, down for soft drop, up for rotate)
+- **Mobile Button Controls**: Complete set of mobile buttons (move left/right, rotate, hold, hard drop, soft drop)
+- **Vibration Feedback**: Haptic feedback for mobile button presses
 - **Key Repeat Logic**: Proper key repeat handling for smooth piece movement
+- **Mobile Optimizations**: Prevented zoom, improved touch targets, visual button feedback
 
 ### Audio Architecture
 - **Web Audio Integration**: Sound effects for game events (rotate, line clear, drop, game over)

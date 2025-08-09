@@ -52,8 +52,9 @@ app.use((req, res, next) => {
   
   // catch-all route for serving index.html
   app.get('*', (req, res) => {
-    const path = require('path');
-    res.sendFile(path.join(process.cwd(), 'index.html'));
+    import('path').then(path => {
+      res.sendFile(path.join(process.cwd(), 'index.html'));
+    });
   });
 
   // ALWAYS serve the app on port 5000

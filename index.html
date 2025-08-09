@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>Fruit Tetris</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -110,9 +113,14 @@
             <!-- Mobile Controls -->
             <div id="mobile-controls" class="mobile-only">
                 <div class="mobile-buttons">
+                    <button id="mobile-left" class="mobile-btn">←</button>
                     <button id="mobile-rotate" class="mobile-btn">↻</button>
+                    <button id="mobile-right" class="mobile-btn">→</button>
+                </div>
+                <div class="mobile-buttons secondary-controls">
                     <button id="mobile-hold" class="mobile-btn">Hold</button>
-                    <button id="mobile-drop" class="mobile-btn">↓</button>
+                    <button id="mobile-drop" class="mobile-btn">Hard Drop</button>
+                    <button id="mobile-soft-drop" class="mobile-btn">Soft Drop</button>
                 </div>
             </div>
         </div>

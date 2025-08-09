@@ -46,30 +46,43 @@ class InputManager {
     }
     
     bindMobileButtons() {
-        const rotateBtn = document.getElementById('mobile-rotate');
-        const holdBtn = document.getElementById('mobile-hold');
-        const dropBtn = document.getElementById('mobile-drop');
+        const buttons = {
+            'mobile-left': () => this.game.movePiece(-1, 0),
+            'mobile-right': () => this.game.movePiece(1, 0),
+            'mobile-rotate': () => this.game.rotatePiece(),
+            'mobile-hold': () => this.game.holdPiece(),
+            'mobile-drop': () => this.game.hardDrop(),
+            'mobile-soft-drop': () => this.game.softDrop()
+        };
         
-        if (rotateBtn) {
-            rotateBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                this.game.rotatePiece();
-            });
-        }
-        
-        if (holdBtn) {
-            holdBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                this.game.holdPiece();
-            });
-        }
-        
-        if (dropBtn) {
-            dropBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                this.game.hardDrop();
-            });
-        }
+        Object.entries(buttons).forEach(([id, action]) => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                // Handle both touch and click events
+                ['touchstart', 'click'].forEach(eventType => {
+                    btn.addEventListener(eventType, (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        // Add vibration feedback for mobile
+                        if (navigator.vibrate && eventType === 'touchstart') {
+                            navigator.vibrate(20);
+                        }
+                        
+                        action();
+                        
+                        // Visual feedback
+                        btn.style.transform = 'scale(0.95)';
+                        setTimeout(() => {
+                            btn.style.transform = '';
+                        }, 100);
+                    });
+                });
+                
+                // Prevent long press context menu
+                btn.addEventListener('contextmenu', (e) => e.preventDefault());
+            }
+        });
     }
     
     onKeyDown(event) {
@@ -163,6 +176,7 @@ class InputManager {
         if (currentTime - this.lastTap < this.tapDelay) {
             this.game.hardDrop();
             this.lastTap = 0; // Reset to prevent triple tap
+            return; // Exit early for double tap
         } else {
             this.lastTap = currentTime;
         }
@@ -199,17 +213,13 @@ class InputManager {
                 // Vertical swipe
                 if (deltaY > 0) {
                     this.game.softDrop(); // Swipe down
+                } else if (deltaY < -this.swipeThreshold) {
+                    this.game.rotatePiece(); // Swipe up to rotate
                 }
-                // Swipe up could be used for hard drop, but double-tap is better
             }
-        } else if (deltaTime < 200) {
-            // Quick tap - rotate piece
-            // Only if not part of a double-tap sequence
-            setTimeout(() => {
-                if (Date.now() - this.lastTap > this.tapDelay) {
-                    this.game.rotatePiece();
-                }
-            }, this.tapDelay);
+        } else if (deltaTime < 200 && Date.now() - this.lastTap > this.tapDelay) {
+            // Quick tap - rotate piece (only if not double-tap)
+            this.game.rotatePiece();
         }
         
         this.touchStartPos = null;
