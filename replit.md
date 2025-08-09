@@ -2,9 +2,16 @@
 
 ## Overview
 
-A playable Tetris clone featuring fruit-themed tetromino blocks, built with HTML5 Canvas and vanilla JavaScript for the core game mechanics, with a React/TypeScript frontend wrapper. The project uses a hybrid architecture where the main Tetris game logic is implemented in vanilla JavaScript files, while the UI components and application shell are built with modern React and Tailwind CSS.
+A fully functional Tetris clone featuring fruit-themed tetromino blocks, built with HTML5 Canvas and vanilla JavaScript. The game runs directly in the browser without React, using a pure vanilla JavaScript implementation for optimal performance.
 
 The game features all standard Tetris mechanics including gravity, rotation, line clearing, scoring, and level progression, with fruit emoji representing different tetromino shapes (🍌 for I-piece, 🍊 for O-piece, etc.).
+
+## Recent Changes (August 9, 2025)
+
+- Fixed overlay display issues - pause and game over screens now properly show one at a time
+- Resolved pause/unpause functionality - P key now correctly toggles between paused and playing states
+- Added proper CSS hidden class for overlay management
+- Improved state management to prevent duplicate overlay displays
 
 ## User Preferences
 
@@ -13,10 +20,10 @@ Preferred communication style: Simple, everyday language.
 ## System Architecture
 
 ### Frontend Architecture
-- **React/TypeScript Application**: Modern React application structure with TypeScript for type safety
-- **Vite Build System**: Fast development server and build tool with hot module replacement
-- **Tailwind CSS**: Utility-first CSS framework for responsive design and styling
-- **Component Library**: Comprehensive UI component system using Radix UI primitives for accessibility
+- **Vanilla JavaScript Application**: Pure JavaScript implementation without frameworks for optimal performance
+- **Express Server**: Simple Node.js server to serve the static HTML/JS/CSS files
+- **HTML5 Canvas**: Direct canvas rendering for game graphics
+- **CSS3**: Modern CSS with responsive design and mobile-first approach
 
 ### Game Engine Design
 - **Vanilla JavaScript Core**: The core Tetris game logic is implemented in vanilla JavaScript for performance and simplicity
@@ -29,9 +36,9 @@ Preferred communication style: Simple, everyday language.
   - `utils.js` - Utility functions and helpers
 
 ### State Management
-- **Zustand Stores**: Lightweight state management for game phase control and audio settings
+- **Game State Machine**: Simple state management using JavaScript classes (menu, playing, paused, gameOver)
 - **Local Storage**: High score persistence and user preference storage
-- **Game State Isolation**: Core game state managed within vanilla JS classes, UI state managed by React
+- **State Isolation**: All game state managed within vanilla JS classes for clean separation of concerns
 
 ### Input System
 - **Multi-Modal Controls**: Support for keyboard, touch, and enhanced on-screen buttons
