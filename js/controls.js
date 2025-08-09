@@ -129,7 +129,16 @@ class InputManager {
     }
     
     handleKeyPress(key) {
-        if (!this.game || this.game.state !== 'playing') return;
+        if (!this.game) return;
+        
+        // Handle pause key regardless of game state
+        if (key === 'KeyP') {
+            this.game.togglePause();
+            return;
+        }
+        
+        // Other keys only work when playing
+        if (this.game.state !== 'playing') return;
         
         switch (key) {
             case 'ArrowLeft':
@@ -153,9 +162,6 @@ class InputManager {
                 break;
             case 'KeyC':
                 this.game.holdPiece();
-                break;
-            case 'KeyP':
-                this.game.togglePause();
                 break;
         }
     }
