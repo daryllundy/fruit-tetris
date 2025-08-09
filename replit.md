@@ -8,6 +8,23 @@ The game features all standard Tetris mechanics including gravity, rotation, lin
 
 ## Recent Changes (August 9, 2025)
 
+### Visual Design Updates
+- Removed grid lines from game board for cleaner appearance
+- Removed bounding boxes around fruit pieces - now displays pure emojis
+- Added 10 unique fruit-themed backgrounds that change with each level:
+  - Level 1: Grape Garden (Purple)
+  - Level 2: Kiwi Forest (Brown/Green)
+  - Level 3: Orange Grove (Orange)
+  - Level 4: Strawberry Fields (Red)
+  - Level 5: Banana Beach (Yellow)
+  - Level 6: Watermelon Wave (Light Green)
+  - Level 7: Dragon Fruit Desert (Pink)
+  - Level 8: Plum Paradise (Dark Purple)
+  - Level 9: Apple Orchard (Green)
+  - Level 10+: Blueberry Sky (Blue)
+- Added gradient effects and subtle patterns for visual depth
+
+### Bug Fixes
 - Fixed overlay display issues - pause and game over screens now properly show one at a time
 - Resolved pause/unpause functionality - P key now correctly toggles between paused and playing states
 - Added proper CSS hidden class for overlay management
