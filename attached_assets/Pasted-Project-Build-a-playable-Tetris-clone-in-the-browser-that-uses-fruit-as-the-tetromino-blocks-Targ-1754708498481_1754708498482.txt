@@ -1,0 +1,78 @@
+Project: Build a playable Tetris clone in the browser that uses fruit as the tetromino blocks.
+
+Target platform: Replit (runs in the browser).
+Tech stack: HTML5 + CSS + vanilla JavaScript (Canvas API). No build step required.
+
+⸻
+
+Requirements (must-have)
+	1.	Core gameplay
+	•	Standard 10×20 Tetris playfield (visible grid).
+	•	All 7 classic tetromino shapes (I, J, L, O, S, T, Z).
+	•	Gravity, locking, line clear detection, scoring, and level progression.
+	•	Rotation system (basic SRS-like rotation is fine).
+	•	Next-piece preview (show next 3 pieces).
+	•	Hold slot (allow holding one tetromino).
+	•	Game over detection.
+	2.	Fruit visuals
+	•	Each tetromino type uses a unique fruit sprite (or high-quality emoji fallback).
+	•	Sprites should tile to fill the block cells (no awkward cropping).
+	•	Use local assets in /public or embed emoji if sprites aren’t available.
+	3.	Controls
+	•	Keyboard:
+	•	Left / Right arrow — move
+	•	Down arrow — soft drop
+	•	Space — hard drop
+	•	Z / X — rotate left / right (or Up arrow for rotate right)
+	•	C — hold
+	•	P — pause
+	•	Touch support:
+	•	Swipe left/right for movement
+	•	Tap to rotate
+	•	Swipe down for soft drop / double-tap for hard drop (reasonable mobile mapping)
+	4.	UI
+	•	Score, current level, lines cleared displayed.
+	•	Next-piece preview panel and Hold panel.
+	•	Pause and restart buttons.
+	•	Simple main menu with “Play” and “Instructions.”
+	5.	Sound & Feedback
+	•	Optional short sounds for rotate, line clear, hard drop, and game over (use free / permissive assets; optional mute button).
+	6.	Code quality
+	•	Well-structured, modular JS (separate logical components where reasonable).
+	•	Comments for major functions.
+	•	Clear instructions in README or on-screen for how to run and controls.
+	7.	License
+	•	Use CC0/public-domain or provide clear attribution for any third-party assets used.
+
+⸻
+
+Stretch goals (optional)
+	•	Smooth animations for gravity and piece movement.
+	•	Ghost piece preview showing where the tetromino will land.
+	•	Soft-lock timer and DAS (Delayed Auto Shift) handling for polished movement.
+	•	Multiple difficulty modes (easy / normal / hard).
+	•	High-score list persisted in localStorage.
+	•	Theme switcher: emoji vs. fruit sprites vs. pixel art.
+
+⸻
+
+Deliverables
+	•	index.html, style.css, main.js (or a small organized folder structure).
+	•	/assets/ with fruit sprites and sound files (or emoji fallback).
+	•	Short README with run instructions: “Press ▶ (Run) in Replit, or open index.html locally.”
+
+⸻
+
+Acceptance criteria (what I’ll test)
+	•	Game runs in Replit’s browser preview.
+	•	Piece movement, rotation, locking, line clears, and scoring work.
+	•	Next preview and Hold are functional.
+	•	Fruit visuals show up for each tetromino (emoji acceptable).
+	•	Keyboard controls work as specified; basic touch mapping works on mobile.
+
+⸻
+
+Notes for implementer
+	•	If using sprites, provide a single spritesheet or one image per fruit sized to match block cell dimensions (example: 32×32 or 64×64).
+	•	If you can’t find sprites, default to emoji (🍎🍌🍇🍊🍓🥝🍍) mapped consistently to tetrominoes.
+	•	Keep performance in mind — avoid re-drawing the entire canvas unnecessarily.
