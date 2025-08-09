@@ -171,9 +171,19 @@ class InputManager {
         
         event.preventDefault();
         const touch = event.touches[0];
+        const canvas = document.getElementById('game-canvas');
+        const rect = canvas.getBoundingClientRect();
+        
+        // Calculate touch position relative to canvas
+        const relativeX = touch.clientX - rect.left;
+        const relativeY = touch.clientY - rect.top;
+        
+        // Store touch start position
         this.touchStartPos = {
             x: touch.clientX,
             y: touch.clientY,
+            relativeX: relativeX,
+            relativeY: relativeY,
             time: Date.now()
         };
         
@@ -182,6 +192,7 @@ class InputManager {
         if (currentTime - this.lastTap < this.tapDelay) {
             this.game.hardDrop();
             this.lastTap = 0; // Reset to prevent triple tap
+            this.touchStartPos = null; // Clear to prevent further processing
             return; // Exit early for double tap
         } else {
             this.lastTap = currentTime;
@@ -198,6 +209,9 @@ class InputManager {
         
         event.preventDefault();
         const touch = event.changedTouches[0];
+        const canvas = document.getElementById('game-canvas');
+        const rect = canvas.getBoundingClientRect();
+        
         const deltaX = touch.clientX - this.touchStartPos.x;
         const deltaY = touch.clientY - this.touchStartPos.y;
         const deltaTime = Date.now() - this.touchStartPos.time;
@@ -224,11 +238,67 @@ class InputManager {
                 }
             }
         } else if (deltaTime < 200 && Date.now() - this.lastTap > this.tapDelay) {
-            // Quick tap - rotate piece (only if not double-tap)
-            this.game.rotatePiece();
+            // Quick tap - determine action based on tap location
+            this.handleTap(this.touchStartPos.relativeX, this.touchStartPos.relativeY, canvas);
         }
         
         this.touchStartPos = null;
+    }
+    
+    handleTap(relativeX, relativeY, canvas) {
+        if (!this.game || !this.game.currentPiece) return;
+        
+        // Get canvas dimensions
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+        const blockSize = 30; // Standard block size
+        
+        // Get current piece position in pixels
+        const pieceX = this.game.currentPiece.position.x * blockSize;
+        const pieceWidth = 4 * blockSize; // Max tetromino width
+        const pieceCenterX = pieceX + pieceWidth / 2;
+        
+        // Calculate tap zones
+        const leftZone = canvasWidth * 0.33;  // Left third of screen
+        const rightZone = canvasWidth * 0.67; // Right third of screen
+        
+        // Check if tap is on the piece area (center zone with some tolerance)
+        const pieceZoneLeft = pieceCenterX - pieceWidth;
+        const pieceZoneRight = pieceCenterX + pieceWidth;
+        
+        if (relativeX >= pieceZoneLeft && relativeX <= pieceZoneRight) {
+            // Tap on piece - rotate
+            this.game.rotatePiece();
+            
+            // Vibration feedback
+            if (navigator.vibrate) {
+                navigator.vibrate(20);
+            }
+        } else if (relativeX < leftZone) {
+            // Tap on left side - move left
+            this.game.movePiece(-1, 0);
+            
+            // Vibration feedback
+            if (navigator.vibrate) {
+                navigator.vibrate(15);
+            }
+        } else if (relativeX > rightZone) {
+            // Tap on right side - move right
+            this.game.movePiece(1, 0);
+            
+            // Vibration feedback
+            if (navigator.vibrate) {
+                navigator.vibrate(15);
+            }
+        } else {
+            // Tap in middle area but not on piece - also rotate (fallback)
+            this.game.rotatePiece();
+            
+            // Vibration feedback
+            if (navigator.vibrate) {
+                navigator.vibrate(20);
+            }
+        }
     }
     
     // Check if a key is currently pressed
