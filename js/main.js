@@ -207,6 +207,23 @@ class TetrisApp {
         if (linesElement) {
             linesElement.textContent = this.game.lines;
         }
+        
+        // Update combo stats
+        const comboStats = this.game.getComboStats();
+        const totalCombosElement = document.getElementById('total-combos');
+        if (totalCombosElement) {
+            totalCombosElement.textContent = comboStats.totalCombos;
+        }
+        
+        const comboMultiplierElement = document.getElementById('combo-multiplier');
+        if (comboMultiplierElement) {
+            comboMultiplierElement.textContent = comboStats.currentMultiplier.toFixed(1) + 'x';
+        }
+        
+        const lastComboElement = document.getElementById('last-combo');
+        if (lastComboElement) {
+            lastComboElement.textContent = comboStats.lastComboSize > 0 ? comboStats.lastComboSize + ' fruits' : '-';
+        }
     }
     
     showGameOverlay(overlayId) {
@@ -342,6 +359,11 @@ class TetrisRenderer {
         if (this.game.clearingLines.length > 0) {
             this.drawLineClearEffect();
         }
+        
+        // Draw combo notification
+        if (this.game.comboNotification) {
+            this.drawComboNotification();
+        }
     }
     
     drawLevelBackground() {
@@ -435,6 +457,51 @@ class TetrisRenderer {
         this.game.clearingLines.forEach(lineY => {
             this.ctx.fillRect(0, lineY * this.blockSize, this.canvas.width, this.blockSize);
         });
+    }
+    
+    drawComboNotification() {
+        const notification = this.game.comboNotification;
+        const elapsed = Date.now() - notification.timestamp;
+        const progress = elapsed / 2000; // 2 second duration
+        
+        if (progress >= 1) return; // Notification expired
+        
+        // Calculate animation properties
+        const alpha = Math.max(0, 1 - progress);
+        const scale = 1 + (1 - progress) * 0.5; // Start big and shrink
+        const y = this.canvas.height * 0.3 - progress * 50; // Float upward
+        
+        this.ctx.save();
+        
+        // Position and scale
+        this.ctx.translate(this.canvas.width / 2, y);
+        this.ctx.scale(scale, scale);
+        this.ctx.globalAlpha = alpha;
+        
+        // Background glow
+        this.ctx.fillStyle = `rgba(255, 215, 0, ${alpha * 0.3})`;
+        this.ctx.fillRect(-100, -40, 200, 80);
+        
+        // Main text
+        this.ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+        this.ctx.font = 'bold 24px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        
+        // Combo text
+        this.ctx.fillText(`FRUIT COMBO!`, 0, -15);
+        
+        // Bonus points
+        this.ctx.font = 'bold 18px Arial';
+        this.ctx.fillStyle = `rgba(255, 215, 0, ${alpha})`;
+        this.ctx.fillText(`+${notification.bonus} points`, 0, 10);
+        
+        // Combo size and multiplier
+        this.ctx.font = '14px Arial';
+        this.ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.8})`;
+        this.ctx.fillText(`${notification.size} fruits × ${notification.multiplier.toFixed(1)}x`, 0, 30);
+        
+        this.ctx.restore();
     }
     
     renderHoldPiece() {

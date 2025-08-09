@@ -61,7 +61,9 @@ class SoundManager {
                 drop: this.createBeep(100, 0.15, 'sawtooth'),
                 lineClear: this.createBeep(440, 0.3, 'triangle'),
                 levelUp: this.createMelody([262, 330, 392, 523], 0.2),
-                gameOver: this.createBeep(80, 1.0, 'sawtooth')
+                gameOver: this.createBeep(80, 1.0, 'sawtooth'),
+                combo: this.createMelody([330, 392, 523, 659], 0.15), // Happy combo sound
+                tetris: this.createMelody([523, 659, 784, 1047], 0.25) // Tetris celebration
             };
         } catch (error) {
             console.warn('Web Audio API not supported:', error);
@@ -201,6 +203,8 @@ class SoundManager {
     playRotate() { this.play('rotate'); }
     playDrop() { this.play('drop'); }
     playLineClear() { this.play('lineClear'); }
+    playCombo() { this.play('combo'); }
+    playTetris() { this.play('tetris'); }
     playLevelUp() { this.play('levelUp'); }
     playGameOver() { this.play('gameOver'); }
     

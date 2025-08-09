@@ -51,8 +51,13 @@
                 <p>• Swipe down for soft drop</p>
                 <p>• Tap to rotate</p>
                 <p>• Double-tap for hard drop</p>
+                <h3>🍎 Fruit Combo System:</h3>
+                <p>• Create clusters of 3+ matching fruit types for bonus points</p>
+                <p>• Different patterns give different bonuses (lines, squares, crosses)</p>
+                <p>• Build bigger clusters for higher multipliers</p>
+                <p>• Chain combos to increase your multiplier up to 3x</p>
                 <h3>Goal:</h3>
-                <p>Complete horizontal lines to clear them and score points. The game ends when pieces reach the top!</p>
+                <p>Complete horizontal lines to clear them and score points. Use strategic fruit placement for massive combos!</p>
             </div>
             <button id="back-btn" class="menu-button">Back to Menu</button>
         </div>
@@ -78,6 +83,21 @@
                         <div class="score-item">
                             <label>Lines:</label>
                             <span id="lines">0</span>
+                        </div>
+                    </div>
+                    <div class="panel-section combo-section">
+                        <h3>🍎 Combos</h3>
+                        <div class="score-item">
+                            <label>Total:</label>
+                            <span id="total-combos">0</span>
+                        </div>
+                        <div class="score-item">
+                            <label>Multiplier:</label>
+                            <span id="combo-multiplier">1.0x</span>
+                        </div>
+                        <div class="score-item">
+                            <label>Last:</label>
+                            <span id="last-combo">-</span>
                         </div>
                     </div>
                 </div>
