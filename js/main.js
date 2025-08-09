@@ -202,25 +202,31 @@ class TetrisApp {
     
     showGameOverlay(overlayId) {
         const overlay = document.getElementById('game-overlay');
-        const screens = overlay.querySelectorAll('div');
+        if (!overlay) return;
         
-        screens.forEach(screen => {
-            screen.classList.add('hidden');
-        });
+        // Hide all screens first
+        const pauseScreen = document.getElementById('pause-screen');
+        const gameOverScreen = document.getElementById('game-over-screen');
         
+        if (pauseScreen) pauseScreen.classList.add('hidden');
+        if (gameOverScreen) gameOverScreen.classList.add('hidden');
+        
+        // Show only the target screen
         const targetScreen = document.getElementById(overlayId);
         if (targetScreen) {
             targetScreen.classList.remove('hidden');
+            overlay.classList.remove('hidden');
         }
-        
-        overlay.classList.remove('hidden');
     }
     
     hideGameOverlay() {
         const overlay = document.getElementById('game-overlay');
-        if (overlay) {
-            overlay.classList.add('hidden');
-        }
+        const pauseScreen = document.getElementById('pause-screen');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        
+        if (overlay) overlay.classList.add('hidden');
+        if (pauseScreen) pauseScreen.classList.add('hidden');
+        if (gameOverScreen) gameOverScreen.classList.add('hidden');
     }
     
     updateFinalScore() {
