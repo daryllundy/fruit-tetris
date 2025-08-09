@@ -2,11 +2,25 @@
 
 ## Overview
 
-A fully functional Tetris clone featuring fruit-themed tetromino blocks, built with HTML5 Canvas and vanilla JavaScript. The game runs directly in the browser without React, using a pure vanilla JavaScript implementation for optimal performance.
+A fully functional Tetris clone featuring fruit-themed tetromino blocks with an innovative strategic combo system. Built with HTML5 Canvas and vanilla JavaScript for optimal performance.
 
-The game features all standard Tetris mechanics including gravity, rotation, line clearing, scoring, and level progression, with fruit emoji representing different tetromino shapes (🍌 for I-piece, 🍊 for O-piece, etc.).
+The game combines all standard Tetris mechanics (gravity, rotation, line clearing, scoring, level progression) with a unique fruit combo bonus system that rewards strategic placement. Players create clusters of matching fruit types for bonus points, with different patterns (lines, squares, crosses) providing varying multipliers. The dynamic combo system encourages deeper strategic thinking beyond traditional line clearing.
 
 ## Recent Changes (August 9, 2025)
+
+### Major Feature: Fruit Combo Bonus System
+- Implemented strategic fruit cluster detection system
+- Rewards players for creating clusters of 3+ matching fruit types
+- Pattern-based bonus system:
+  - Line patterns: Horizontal/vertical fruit arrangements
+  - Square patterns: Rectangular filled areas of same fruit
+  - Cross patterns: T-shaped or + shaped clusters
+  - Scattered patterns: Wide-spread fruit networks
+- Dynamic multiplier system (1.0x to 3.0x) that builds with successful combos
+- Visual combo notifications with floating score displays
+- Audio feedback with special combo sound effects
+- Real-time combo statistics in game UI (total combos, current multiplier, last combo size)
+- Updated instructions explaining the strategic combo gameplay
 
 ### Visual Design Updates
 - Removed grid lines from game board for cleaner appearance
