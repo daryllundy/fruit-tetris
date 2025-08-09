@@ -169,13 +169,22 @@ class TetrisApp {
         // Update UI based on game state
         this.updateUI();
         
+        // Store previous state to avoid unnecessary updates
+        if (this.previousGameState === this.game.state) {
+            return;
+        }
+        this.previousGameState = this.game.state;
+        
         // Handle game state changes
         if (this.game.state === 'paused') {
+            console.log('Game state: paused - showing pause screen');
             this.showGameOverlay('pause-screen');
         } else if (this.game.state === 'gameOver') {
+            console.log('Game state: gameOver - showing game over screen');
             this.showGameOverlay('game-over-screen');
             this.updateFinalScore();
         } else {
+            console.log('Game state:', this.game.state, '- hiding overlays');
             this.hideGameOverlay();
         }
     }

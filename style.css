@@ -42,6 +42,10 @@ body {
     pointer-events: none;
 }
 
+.hidden {
+    display: none !important;
+}
+
 /* Main Menu Styles */
 #main-menu h1 {
     font-size: 3rem;
