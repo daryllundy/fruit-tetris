@@ -144,6 +144,7 @@ class SoundManager {
             const bgMusic = this.sounds.background;
             bgMusic.loop = true;
             bgMusic.volume = this.volume * 0.3; // Background music should be quieter
+            bgMusic.playbackRate = 1.0; // Reset to normal speed
             
             const playPromise = bgMusic.play();
             if (playPromise !== undefined) {
@@ -160,6 +161,41 @@ class SoundManager {
         if (this.sounds.background) {
             this.sounds.background.pause();
             this.sounds.background.currentTime = 0;
+        }
+    }
+    
+    // Adjust the music speed based on danger level (stack height)
+    adjustMusicSpeed(dangerLevel) {
+        if (!this.sounds.background || this.muted) return;
+        
+        // dangerLevel is between 0 (safe) and 1 (very dangerous)
+        // Map to playback rate: 1.0 (normal) to 1.5 (50% faster) 
+        const minSpeed = 1.0;
+        const maxSpeed = 1.5;
+        
+        // Use an exponential curve for more dramatic effect as danger increases
+        const speedMultiplier = Math.pow(dangerLevel, 2); // Square for exponential feel
+        const playbackRate = minSpeed + (maxSpeed - minSpeed) * speedMultiplier;
+        
+        // Smoothly adjust the playback rate
+        try {
+            const currentRate = this.sounds.background.playbackRate;
+            const targetRate = Math.max(minSpeed, Math.min(maxSpeed, playbackRate));
+            
+            // Smooth transition to avoid jarring changes
+            const smoothRate = currentRate + (targetRate - currentRate) * 0.3;
+            this.sounds.background.playbackRate = smoothRate;
+            
+            // Also adjust pitch slightly for more tension
+            if (this.audioContext && !this.muted) {
+                // Optionally adjust master gain for intensity
+                const intensityBoost = 1 + (dangerLevel * 0.2); // Up to 20% louder when dangerous
+                if (this.sounds.background) {
+                    this.sounds.background.volume = Math.min(1, this.volume * 0.3 * intensityBoost);
+                }
+            }
+        } catch (error) {
+            console.warn('Error adjusting music speed:', error);
         }
     }
     

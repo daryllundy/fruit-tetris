@@ -6,7 +6,30 @@ A fully functional Tetris clone featuring fruit-themed tetromino blocks with an 
 
 The game combines all standard Tetris mechanics (gravity, rotation, line clearing, scoring, level progression) with a unique fruit combo bonus system that rewards strategic placement. Players create clusters of matching fruit types for bonus points, with different patterns (lines, squares, crosses) providing varying multipliers. The dynamic combo system encourages deeper strategic thinking beyond traditional line clearing.
 
-## Recent Changes (August 9, 2025)
+## Recent Changes (August 10, 2025)
+
+### Dynamic Music Tension System
+- Implemented adaptive background music that speeds up as blocks stack higher
+- Music playback rate increases from 1.0x (normal) to 1.5x (50% faster) based on danger level
+- Danger levels calculated from stack height:
+  - Safe zone: Bottom 30% of board (normal speed)
+  - Danger zone: Top 80% of board (maximum speed)
+  - Smooth exponential curve for gradual transitions
+- Volume also increases slightly (up to 20%) when in danger for added intensity
+- Music tension updates whenever pieces lock or lines are cleared
+- Console logging for debugging when danger exceeds 50%
+
+### Enhanced Mobile Touch Controls
+- **Tap zones** for intuitive piece control:
+  - Tap left third of screen: Move piece left
+  - Tap right third of screen: Move piece right
+  - Tap directly on piece: Rotate piece
+- Haptic feedback (vibration) for mobile touch actions
+- Swipe controls remain available (down for soft drop, left/right for movement)
+- Double-tap for hard drop functionality preserved
+- Updated instructions to clearly explain new tap controls
+
+## Previous Updates (August 9, 2025)
 
 ### Major Feature: Fruit Combo Bonus System
 - Implemented strategic fruit cluster detection system

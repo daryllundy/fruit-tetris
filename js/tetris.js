@@ -63,6 +63,7 @@ class TetrisGame {
         this.reset();
         this.spawnNewPiece();
         window.soundManager.playBackgroundMusic();
+        this.updateMusicTension(); // Initialize music tension
     }
     
     reset() {
@@ -165,6 +166,9 @@ class TetrisGame {
         } else {
             this.spawnNewPiece();
         }
+        
+        // Update music speed based on stack height
+        this.updateMusicTension();
     }
     
     checkCompletedLines() {
@@ -229,6 +233,9 @@ class TetrisGame {
         
         this.clearingLines = [];
         this.spawnNewPiece();
+        
+        // Update music speed after clearing lines (stack may be lower now)
+        this.updateMusicTension();
     }
     
     updateScore(linesCleared, comboBonus = 0) {
@@ -613,6 +620,58 @@ class TetrisGame {
         setTimeout(() => {
             this.comboNotification = null;
         }, 2000);
+    }
+    
+    // ===== DYNAMIC MUSIC SYSTEM =====
+    
+    getStackHeight() {
+        // Find the highest non-empty row
+        for (let y = 0; y < this.BOARD_HEIGHT; y++) {
+            for (let x = 0; x < this.BOARD_WIDTH; x++) {
+                if (this.grid[y][x] !== 0) {
+                    return this.BOARD_HEIGHT - y; // Return height from bottom
+                }
+            }
+        }
+        return 0; // Empty board
+    }
+    
+    getDangerLevel() {
+        // Calculate danger level based on stack height (0 = safe, 1 = maximum danger)
+        const stackHeight = this.getStackHeight();
+        const safeZone = this.BOARD_HEIGHT * 0.3; // Bottom 30% is safe
+        const dangerZone = this.BOARD_HEIGHT * 0.8; // Top 80% is danger zone
+        
+        if (stackHeight <= safeZone) {
+            return 0; // Safe
+        } else if (stackHeight >= dangerZone) {
+            return 1; // Maximum danger
+        } else {
+            // Linear interpolation between safe and danger zones
+            return (stackHeight - safeZone) / (dangerZone - safeZone);
+        }
+    }
+    
+    updateMusicTension() {
+        // Calculate danger level and adjust music speed
+        const dangerLevel = this.getDangerLevel();
+        
+        // Log for debugging
+        if (dangerLevel > 0.5) {
+            console.log(`Stack height danger: ${Math.floor(dangerLevel * 100)}% - Music speeding up!`);
+        }
+        
+        // Adjust background music speed based on danger
+        window.soundManager.adjustMusicSpeed(dangerLevel);
+        
+        // Additional tension effects at high danger
+        if (dangerLevel > 0.7) {
+            // Flash warning or add visual effects here if needed
+            // This could trigger warning animations in the renderer
+            this.highDangerMode = true;
+        } else {
+            this.highDangerMode = false;
+        }
     }
     
     getComboStats() {
