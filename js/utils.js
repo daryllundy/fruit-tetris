@@ -85,6 +85,7 @@ function throttle(func, limit) {
  */
 const Storage = {
     get(key, defaultValue = null) {
+        if (typeof localStorage === 'undefined') return defaultValue;
         try {
             const item = localStorage.getItem(key);
             return item ? JSON.parse(item) : defaultValue;
@@ -95,6 +96,7 @@ const Storage = {
     },
     
     set(key, value) {
+        if (typeof localStorage === 'undefined') return false;
         try {
             localStorage.setItem(key, JSON.stringify(value));
             return true;
@@ -105,6 +107,7 @@ const Storage = {
     },
     
     remove(key) {
+        if (typeof localStorage === 'undefined') return false;
         try {
             localStorage.removeItem(key);
             return true;
@@ -119,6 +122,7 @@ const Storage = {
  * Check if device is mobile
  */
 function isMobile() {
+    if (typeof window === 'undefined') return false;
     return window.innerWidth <= 768 || 'ontouchstart' in window;
 }
 
@@ -134,12 +138,17 @@ function addEventListenerWithCleanup(element, event, handler, options = {}) {
  * Request animation frame with fallback
  */
 const requestAnimFrame = (function() {
-    return window.requestAnimationFrame ||
-           window.webkitRequestAnimationFrame ||
-           window.mozRequestAnimationFrame ||
-           function(callback) {
-               window.setTimeout(callback, 1000 / 60);
-           };
+    if (typeof window !== 'undefined') {
+        return window.requestAnimationFrame ||
+               window.webkitRequestAnimationFrame ||
+               window.mozRequestAnimationFrame ||
+               function(callback) {
+                   window.setTimeout(callback, 1000 / 60);
+               };
+    }
+    return function(callback) {
+        setTimeout(callback, 1000 / 60);
+    };
 })();
 
 /**
@@ -213,4 +222,23 @@ class Vector2 {
     equals(other) {
         return this.x === other.x && this.y === other.y;
     }
+}
+
+// Export for ES modules (testing)
+if (typeof window === 'undefined') {
+    globalThis.create2DArray = create2DArray;
+    globalThis.clone2DArray = clone2DArray;
+    globalThis.isInBounds = isInBounds;
+    globalThis.randomInt = randomInt;
+    globalThis.shuffleArray = shuffleArray;
+    globalThis.formatScore = formatScore;
+    globalThis.debounce = debounce;
+    globalThis.throttle = throttle;
+    globalThis.Storage = Storage;
+    globalThis.isMobile = isMobile;
+    globalThis.addEventListenerWithCleanup = addEventListenerWithCleanup;
+    globalThis.requestAnimFrame = requestAnimFrame;
+    globalThis.Timer = Timer;
+    globalThis.Colors = Colors;
+    globalThis.Vector2 = Vector2;
 }

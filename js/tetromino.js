@@ -367,3 +367,12 @@ class TetrominoBag {
         return result;
     }
 }
+
+// Export for ES modules (testing)
+if (typeof window === 'undefined') {
+    globalThis.TETROMINO_TYPES = TETROMINO_TYPES;
+    globalThis.FRUIT_EMOJIS = FRUIT_EMOJIS;
+    globalThis.TETROMINO_SHAPES = TETROMINO_SHAPES;
+    globalThis.Tetromino = Tetromino;
+    globalThis.TetrominoBag = TetrominoBag;
+}

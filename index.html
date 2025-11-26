@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -9,6 +10,7 @@
     <title>Fruit Tetris</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div id="game-container">
         <!-- Main Menu -->
@@ -16,9 +18,30 @@
             <h1>🍎 Fruit Tetris 🍌</h1>
             <div class="menu-buttons">
                 <button id="play-btn" class="menu-button">Play</button>
+                <button id="settings-btn" class="menu-button">Settings</button>
                 <button id="instructions-btn" class="menu-button">Instructions</button>
                 <button id="mute-btn" class="menu-button">🔊 Sound</button>
             </div>
+        </div>
+
+        <!-- Settings Screen -->
+        <div id="settings-screen" class="screen hidden">
+            <h2>Settings</h2>
+            <div class="settings-content">
+                <div class="setting-item">
+                    <label for="particles-toggle">Particle Effects</label>
+                    <input type="checkbox" id="particles-toggle" checked>
+                </div>
+                <div class="setting-item">
+                    <label for="shake-toggle">Screen Shake</label>
+                    <input type="checkbox" id="shake-toggle" checked>
+                </div>
+                <div class="setting-item">
+                    <label for="intensity-slider">Effects Intensity: <span id="intensity-value">100%</span></label>
+                    <input type="range" id="intensity-slider" min="0" max="200" value="100">
+                </div>
+            </div>
+            <button id="settings-back-btn" class="menu-button">Back to Menu</button>
         </div>
 
         <!-- Instructions Screen -->
@@ -59,7 +82,8 @@
                 <p>• Build bigger clusters for higher multipliers</p>
                 <p>• Chain combos to increase your multiplier up to 3x</p>
                 <h3>Goal:</h3>
-                <p>Complete horizontal lines to clear them and score points. Use strategic fruit placement for massive combos!</p>
+                <p>Complete horizontal lines to clear them and score points. Use strategic fruit placement for massive
+                    combos!</p>
             </div>
             <button id="back-btn" class="menu-button">Back to Menu</button>
         </div>
@@ -154,6 +178,8 @@
     <script src="js/tetromino.js"></script>
     <script src="js/controls.js"></script>
     <script src="js/tetris.js"></script>
+    <script type="module" src="js/effects.js"></script>
     <script src="js/main.js"></script>
 </body>
+
 </html>

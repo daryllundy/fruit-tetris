@@ -6,12 +6,12 @@ class TetrisApp {
         this.renderer = null;
         this.lastTime = 0;
         this.animationId = null;
-        
+
         this.currentScreen = 'main-menu';
-        
+
         this.initializeApp();
     }
-    
+
     async initializeApp() {
         // Wait for DOM to be ready
         if (document.readyState === 'loading') {
@@ -20,116 +20,179 @@ class TetrisApp {
             this.initialize();
         }
     }
-    
+
     initialize() {
         console.log('Initializing Fruit Tetris...');
-        
+
         // Initialize game
         this.game = new TetrisGame();
-        
+
+        // Initialize effects
+        this.particleSystem = new ParticleSystem();
+        this.screenShake = new ScreenShake();
+        this.celebrationManager = new CelebrationManager(this.particleSystem, this.screenShake);
+
+        // Inject effects into game
+        this.game.setEffects(this.celebrationManager, this.particleSystem, this.screenShake);
+
         // Initialize renderer
-        this.renderer = new TetrisRenderer(this.game);
-        
+        this.renderer = new TetrisRenderer(this.game, this.particleSystem, this.screenShake);
+
         // Initialize input
         initializeInput(this.game);
-        
+
         // Bind UI events
         this.bindUIEvents();
-        
+
         // Show initial screen
         this.showScreen('main-menu');
-        
+
         // Start game loop
         this.startGameLoop();
-        
+
         console.log('Game initialized successfully!');
     }
-    
+
     bindUIEvents() {
         // Main menu buttons
         const playBtn = document.getElementById('play-btn');
         const instructionsBtn = document.getElementById('instructions-btn');
         const muteBtn = document.getElementById('mute-btn');
-        
+
         if (playBtn) {
             playBtn.addEventListener('click', () => this.startGame());
         }
-        
+
         if (instructionsBtn) {
             instructionsBtn.addEventListener('click', () => this.showInstructions());
         }
-        
+
+        const settingsBtn = document.getElementById('settings-btn');
+        if (settingsBtn) {
+            settingsBtn.addEventListener('click', () => this.showSettings());
+        }
+
+        const settingsBackBtn = document.getElementById('settings-back-btn');
+        if (settingsBackBtn) {
+            settingsBackBtn.addEventListener('click', () => this.showScreen('main-menu'));
+        }
+
+        // Settings inputs
+        const particlesToggle = document.getElementById('particles-toggle');
+        const shakeToggle = document.getElementById('shake-toggle');
+        const intensitySlider = document.getElementById('intensity-slider');
+
+        if (particlesToggle) {
+            particlesToggle.addEventListener('change', (e) => {
+                if (this.game) this.game.settings.enableParticles = e.target.checked;
+            });
+        }
+
+        if (shakeToggle) {
+            shakeToggle.addEventListener('change', (e) => {
+                if (this.game) this.game.settings.enableScreenShake = e.target.checked;
+            });
+        }
+
+        if (intensitySlider) {
+            intensitySlider.addEventListener('input', (e) => {
+                const value = parseInt(e.target.value);
+                if (this.game) this.game.settings.effectsIntensity = value / 100;
+                const valueDisplay = document.getElementById('intensity-value');
+                if (valueDisplay) valueDisplay.textContent = `${value}%`;
+            });
+        }
+
         if (muteBtn) {
             muteBtn.addEventListener('click', () => this.toggleMute());
         }
-        
+
         // Instructions back button
         const backBtn = document.getElementById('back-btn');
         if (backBtn) {
             backBtn.addEventListener('click', () => this.showScreen('main-menu'));
         }
-        
+
         // Game control buttons
         const pauseBtn = document.getElementById('pause-btn');
         const quitBtn = document.getElementById('quit-btn');
         const restartBtn = document.getElementById('restart-btn');
         const menuBtn = document.getElementById('menu-btn');
-        
+
         if (pauseBtn) {
             pauseBtn.addEventListener('click', () => this.game.togglePause());
         }
-        
+
         if (quitBtn) {
             quitBtn.addEventListener('click', () => this.quitToMenu());
         }
-        
+
         if (restartBtn) {
             restartBtn.addEventListener('click', () => this.restartGame());
         }
-        
+
         if (menuBtn) {
             menuBtn.addEventListener('click', () => this.quitToMenu());
         }
-        
+
         // Update mute button text
         this.updateMuteButton();
     }
-    
+
     startGame() {
         this.showScreen('game-screen');
         this.game.start();
         this.updateUI();
     }
-    
+
     restartGame() {
         this.game.start();
         this.hideGameOverlay();
         this.updateUI();
     }
-    
+
     quitToMenu() {
         this.game.state = 'menu';
         window.soundManager.stopBackgroundMusic();
         this.showScreen('main-menu');
         this.hideGameOverlay();
     }
-    
+
     showInstructions() {
         this.showScreen('instructions');
     }
-    
+
+    showSettings() {
+        this.showScreen('settings-screen');
+        // Update UI to match current settings
+        if (this.game) {
+            const particlesToggle = document.getElementById('particles-toggle');
+            if (particlesToggle) particlesToggle.checked = this.game.settings.enableParticles;
+
+            const shakeToggle = document.getElementById('shake-toggle');
+            if (shakeToggle) shakeToggle.checked = this.game.settings.enableScreenShake;
+
+            const intensity = Math.round(this.game.settings.effectsIntensity * 100);
+            const slider = document.getElementById('intensity-slider');
+            if (slider) slider.value = intensity;
+
+            const valueDisplay = document.getElementById('intensity-value');
+            if (valueDisplay) valueDisplay.textContent = `${intensity}%`;
+        }
+    }
+
     toggleMute() {
         window.soundManager.toggleMute();
         this.updateMuteButton();
     }
-    
+
     updateMuteButton() {
         const muteBtn = document.getElementById('mute-btn');
         if (muteBtn) {
             muteBtn.textContent = window.soundManager.isMuted() ? '🔇 Sound' : '🔊 Sound';
         }
     }
-    
+
     showScreen(screenId) {
         const screens = document.querySelectorAll('.screen');
         screens.forEach(screen => {
@@ -139,42 +202,43 @@ class TetrisApp {
                 screen.classList.add('hidden');
             }
         });
-        
+
         this.currentScreen = screenId;
     }
-    
+
     startGameLoop() {
         const gameLoop = (currentTime) => {
             const deltaTime = currentTime - this.lastTime;
             this.lastTime = currentTime;
-            
+
             // Update game logic
             if (this.game) {
                 this.game.update(deltaTime);
                 this.updateGameState();
             }
-            
+
             // Render
             if (this.renderer) {
+                this.renderer.update(deltaTime);
                 this.renderer.render();
             }
-            
+
             this.animationId = requestAnimFrame(gameLoop);
         };
-        
+
         this.animationId = requestAnimFrame(gameLoop);
     }
-    
+
     updateGameState() {
         // Update UI based on game state
         this.updateUI();
-        
+
         // Store previous state to avoid unnecessary updates
         if (this.previousGameState === this.game.state) {
             return;
         }
         this.previousGameState = this.game.state;
-        
+
         // Handle game state changes
         if (this.game.state === 'paused') {
             console.log('Game state: paused - showing pause screen');
@@ -188,55 +252,55 @@ class TetrisApp {
             this.hideGameOverlay();
         }
     }
-    
+
     updateUI() {
         // Update score display
         const scoreElement = document.getElementById('score');
         if (scoreElement) {
             scoreElement.textContent = formatScore(this.game.score);
         }
-        
+
         // Update level display
         const levelElement = document.getElementById('level');
         if (levelElement) {
             levelElement.textContent = this.game.level;
         }
-        
+
         // Update lines display
         const linesElement = document.getElementById('lines');
         if (linesElement) {
             linesElement.textContent = this.game.lines;
         }
-        
+
         // Update combo stats
         const comboStats = this.game.getComboStats();
         const totalCombosElement = document.getElementById('total-combos');
         if (totalCombosElement) {
             totalCombosElement.textContent = comboStats.totalCombos;
         }
-        
+
         const comboMultiplierElement = document.getElementById('combo-multiplier');
         if (comboMultiplierElement) {
             comboMultiplierElement.textContent = comboStats.currentMultiplier.toFixed(1) + 'x';
         }
-        
+
         const lastComboElement = document.getElementById('last-combo');
         if (lastComboElement) {
             lastComboElement.textContent = comboStats.lastComboSize > 0 ? comboStats.lastComboSize + ' fruits' : '-';
         }
     }
-    
+
     showGameOverlay(overlayId) {
         const overlay = document.getElementById('game-overlay');
         if (!overlay) return;
-        
+
         // Hide all screens first
         const pauseScreen = document.getElementById('pause-screen');
         const gameOverScreen = document.getElementById('game-over-screen');
-        
+
         if (pauseScreen) pauseScreen.classList.add('hidden');
         if (gameOverScreen) gameOverScreen.classList.add('hidden');
-        
+
         // Show only the target screen
         const targetScreen = document.getElementById(overlayId);
         if (targetScreen) {
@@ -244,50 +308,52 @@ class TetrisApp {
             overlay.classList.remove('hidden');
         }
     }
-    
+
     hideGameOverlay() {
         const overlay = document.getElementById('game-overlay');
         const pauseScreen = document.getElementById('pause-screen');
         const gameOverScreen = document.getElementById('game-over-screen');
-        
+
         if (overlay) overlay.classList.add('hidden');
         if (pauseScreen) pauseScreen.classList.add('hidden');
         if (gameOverScreen) gameOverScreen.classList.add('hidden');
     }
-    
+
     updateFinalScore() {
         const finalScoreElement = document.getElementById('final-score');
         if (finalScoreElement) {
             finalScoreElement.textContent = formatScore(this.game.score);
         }
     }
-    
+
     destroy() {
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
         }
-        
+
         if (inputManager) {
             inputManager.destroy();
         }
-        
+
         window.soundManager.stopBackgroundMusic();
     }
 }
 
 // Tetris Renderer Class
 class TetrisRenderer {
-    constructor(game) {
+    constructor(game, particleSystem, screenShake) {
         this.game = game;
+        this.particleSystem = particleSystem;
+        this.screenShake = screenShake;
         this.canvas = document.getElementById('game-canvas');
         this.ctx = this.canvas.getContext('2d');
         this.holdCanvas = document.getElementById('hold-canvas');
         this.holdCtx = this.holdCanvas.getContext('2d');
         this.nextCanvas = document.getElementById('next-canvas');
         this.nextCtx = this.nextCanvas.getContext('2d');
-        
+
         this.blockSize = 30;
-        
+
         // Fruit-themed background colors for different levels
         this.levelBackgrounds = [
             { color: '#4a1f5c', name: 'Grape Garden' },        // Level 1 - Purple
@@ -301,83 +367,103 @@ class TetrisRenderer {
             { color: '#228B22', name: 'Apple Orchard' },       // Level 9 - Green
             { color: '#4169E1', name: 'Blueberry Sky' }        // Level 10+ - Blue
         ];
-        
+
         this.setupCanvases();
     }
-    
+
     setupCanvases() {
         // Main game canvas
         this.canvas.width = this.game.BOARD_WIDTH * this.blockSize;
         this.canvas.height = this.game.BOARD_HEIGHT * this.blockSize;
-        
+
         // Hold canvas
         this.holdCanvas.width = 120;
         this.holdCanvas.height = 120;
-        
+
         // Next pieces canvas
         this.nextCanvas.width = 120;
         this.nextCanvas.height = 360;
-        
+
         // Set font for emoji rendering
         this.ctx.font = `${this.blockSize - 6}px Arial`;
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
-        
+
         this.holdCtx.font = '24px Arial';
         this.holdCtx.textAlign = 'center';
         this.holdCtx.textBaseline = 'middle';
-        
+
         this.nextCtx.font = '20px Arial';
         this.nextCtx.textAlign = 'center';
         this.nextCtx.textBaseline = 'middle';
     }
-    
+
+    update(deltaTime) {
+        if (this.particleSystem) this.particleSystem.update(deltaTime);
+        if (this.screenShake) this.screenShake.update(deltaTime);
+    }
+
     render() {
+        this.ctx.save();
+
+        // Apply screen shake
+        if (this.screenShake) {
+            this.ctx.translate(this.screenShake.offsetX, this.screenShake.offsetY);
+        }
+
         this.renderMainGame();
+
+        // Render particles
+        if (this.particleSystem) {
+            this.particleSystem.render(this.ctx);
+        }
+
+        this.ctx.restore();
+
         this.renderHoldPiece();
         this.renderNextPieces();
     }
-    
+
     renderMainGame() {
         // Draw level-based background
         this.drawLevelBackground();
-        
+
         // Draw placed blocks (no grid)
         this.drawPlacedBlocks();
-        
+
         // Draw ghost piece
         if (this.game.ghostPiece && this.game.settings.showGhost) {
             this.drawPiece(this.game.ghostPiece, true);
         }
-        
+
         // Draw current piece
         if (this.game.currentPiece) {
             this.drawPiece(this.game.currentPiece, false);
         }
-        
+
         // Draw line clear animation
         if (this.game.clearingLines.length > 0) {
             this.drawLineClearEffect();
         }
-        
+
         // Draw combo notification
         if (this.game.comboNotification) {
             this.drawComboNotification();
         }
     }
-    
+
     drawLevelBackground() {
         const levelIndex = Math.min(this.game.level - 1, this.levelBackgrounds.length - 1);
         const background = this.levelBackgrounds[Math.max(0, levelIndex)];
-        
+
         // Create gradient background
         const gradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
         gradient.addColorStop(0, background.color);
         gradient.addColorStop(1, this.adjustBrightness(background.color, -30));
-        
+
         this.ctx.fillStyle = gradient;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        
+
         // Add subtle pattern overlay
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
         for (let y = 0; y < this.canvas.height; y += 60) {
@@ -388,7 +474,7 @@ class TetrisRenderer {
             }
         }
     }
-    
+
     adjustBrightness(color, percent) {
         const num = parseInt(color.replace('#', ''), 16);
         const amt = Math.round(2.55 * percent);
@@ -397,7 +483,7 @@ class TetrisRenderer {
         const B = Math.max(0, Math.min(255, (num & 0x0000FF) + amt));
         return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
     }
-    
+
     drawPlacedBlocks() {
         // Draw only the placed blocks without grid lines
         for (let y = 0; y < this.game.BOARD_HEIGHT; y++) {
@@ -408,7 +494,7 @@ class TetrisRenderer {
             }
         }
     }
-    
+
     drawPiece(piece, isGhost = false) {
         const blocks = piece.getBlocks();
         blocks.forEach(block => {
@@ -417,11 +503,11 @@ class TetrisRenderer {
             }
         });
     }
-    
+
     drawBlock(x, y, blockData, isGhost = false) {
         const pixelX = x * this.blockSize;
         const pixelY = y * this.blockSize;
-        
+
         if (isGhost) {
             // Draw ghost piece - just transparent emoji
             this.ctx.save();
@@ -447,78 +533,78 @@ class TetrisRenderer {
             );
         }
     }
-    
+
     drawLineClearEffect() {
         const progress = (Date.now() - this.game.clearStartTime) / this.game.settings.lineClearDelay;
         const alpha = Math.sin(progress * Math.PI * 4) * 0.5 + 0.5; // Flashing effect
-        
+
         this.ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.8})`;
-        
+
         this.game.clearingLines.forEach(lineY => {
             this.ctx.fillRect(0, lineY * this.blockSize, this.canvas.width, this.blockSize);
         });
     }
-    
+
     drawComboNotification() {
         const notification = this.game.comboNotification;
         const elapsed = Date.now() - notification.timestamp;
         const progress = elapsed / 2000; // 2 second duration
-        
+
         if (progress >= 1) return; // Notification expired
-        
+
         // Calculate animation properties
         const alpha = Math.max(0, 1 - progress);
         const scale = 1 + (1 - progress) * 0.5; // Start big and shrink
         const y = this.canvas.height * 0.3 - progress * 50; // Float upward
-        
+
         this.ctx.save();
-        
+
         // Position and scale
         this.ctx.translate(this.canvas.width / 2, y);
         this.ctx.scale(scale, scale);
         this.ctx.globalAlpha = alpha;
-        
+
         // Background glow
         this.ctx.fillStyle = `rgba(255, 215, 0, ${alpha * 0.3})`;
         this.ctx.fillRect(-100, -40, 200, 80);
-        
+
         // Main text
         this.ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
         this.ctx.font = 'bold 24px Arial';
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
-        
+
         // Combo text
         this.ctx.fillText(`FRUIT COMBO!`, 0, -15);
-        
+
         // Bonus points
         this.ctx.font = 'bold 18px Arial';
         this.ctx.fillStyle = `rgba(255, 215, 0, ${alpha})`;
         this.ctx.fillText(`+${notification.bonus} points`, 0, 10);
-        
+
         // Combo size and multiplier
         this.ctx.font = '14px Arial';
         this.ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.8})`;
         this.ctx.fillText(`${notification.size} fruits × ${notification.multiplier.toFixed(1)}x`, 0, 30);
-        
+
         this.ctx.restore();
     }
-    
+
     renderHoldPiece() {
         // Clear canvas
         this.holdCtx.fillStyle = 'rgba(0, 0, 0, 0.5)';
         this.holdCtx.fillRect(0, 0, this.holdCanvas.width, this.holdCanvas.height);
-        
+
         if (this.game.heldPiece) {
             this.drawPiecePreview(this.holdCtx, this.game.heldPiece, this.holdCanvas.width / 2, this.holdCanvas.height / 2);
         }
     }
-    
+
     renderNextPieces() {
         // Clear canvas
         this.nextCtx.fillStyle = 'rgba(0, 0, 0, 0.5)';
         this.nextCtx.fillRect(0, 0, this.nextCanvas.width, this.nextCanvas.height);
-        
+
         // Draw next 3 pieces
         for (let i = 0; i < Math.min(3, this.game.nextPieces.length); i++) {
             const piece = this.game.nextPieces[i];
@@ -526,11 +612,11 @@ class TetrisRenderer {
             this.drawPiecePreview(this.nextCtx, piece, this.nextCanvas.width / 2, y);
         }
     }
-    
+
     drawPiecePreview(ctx, piece, centerX, centerY) {
         const shape = piece.getCurrentShape();
         const blockSize = 20;
-        
+
         // Find bounding box
         let minX = 4, maxX = -1, minY = 4, maxY = -1;
         for (let y = 0; y < shape.length; y++) {
@@ -543,24 +629,24 @@ class TetrisRenderer {
                 }
             }
         }
-        
+
         // Calculate offset to center the piece
         const width = (maxX - minX + 1) * blockSize;
         const height = (maxY - minY + 1) * blockSize;
         const offsetX = centerX - width / 2;
         const offsetY = centerY - height / 2;
-        
+
         // Draw piece blocks
         for (let y = 0; y < shape.length; y++) {
             for (let x = 0; x < shape[y].length; x++) {
                 if (shape[y][x]) {
                     const pixelX = offsetX + (x - minX) * blockSize;
                     const pixelY = offsetY + (y - minY) * blockSize;
-                    
+
                     // Draw block background
                     ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
                     ctx.fillRect(pixelX, pixelY, blockSize, blockSize);
-                    
+
                     // Draw emoji
                     ctx.fillStyle = 'white';
                     ctx.fillText(
@@ -568,7 +654,7 @@ class TetrisRenderer {
                         pixelX + blockSize / 2,
                         pixelY + blockSize / 2
                     );
-                    
+
                     // Draw border
                     ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
                     ctx.lineWidth = 1;
