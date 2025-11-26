@@ -1,62 +1,61 @@
 # 🍎 Fruit Tetris 🍌
 
-A playable Tetris clone featuring fruit-themed tetromino blocks, built with HTML5 Canvas and vanilla JavaScript.
+![Made with Love](https://img.shields.io/badge/Made%20with-Love-ff69b4.svg)
+![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat&logo=html5&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat&logo=javascript&logoColor=black)
+![Vite](https://img.shields.io/badge/vite-%23646CFF.svg?style=flat&logo=vite&logoColor=white)
 
-## Features
+**Experience the juiciest puzzle game on the web!**
 
-### Core Gameplay
-- **Standard 10×20 Tetris playfield** with visible grid
-- **All 7 classic tetromino shapes** (I, J, L, O, S, T, Z)
-- **Fruit-themed blocks** using emoji: 🍌🍊🍎🍓🥝🍇🍍
-- **Complete game mechanics**: gravity, rotation, line clearing, scoring, level progression
-- **SRS-style rotation system** with wall kicks
-- **Next-piece preview** showing upcoming 3 pieces
-- **Hold slot** for storing one tetromino
-- **Ghost piece** showing drop location
-- **Game over detection** and handling
+Fruit Tetris takes the classic block-stacking formula and infuses it with vibrant colors, satisfying animations, and a delicious fruit theme. Stack your way to victory, trigger massive combos, and enjoy the zen-like flow or the adrenaline of Sprint mode!
 
-### Controls
-**Keyboard:**
-- `←` / `→` - Move left/right
-- `↓` - Soft drop
-- `Space` - Hard drop
-- `Z` / `X` - Rotate left/right (or `↑` for rotate right)
-- `C` - Hold piece
-- `P` - Pause game
+## 🎮 Gameplay Demo
 
-**Touch/Mobile:**
-- Swipe left/right for movement
-- Swipe down for soft drop
-- Tap to rotate
-- Double-tap for hard drop
-- On-screen buttons for rotate, hold, and drop
+Watch the fruit-stacking action in motion!
 
-### UI Features
-- **Score tracking** with level progression
-- **Lines cleared counter**
-- **Pause and restart** functionality
-- **Simple main menu** with Play and Instructions
-- **Mobile-responsive design**
-- **Sound effects** for game events (with mute option)
-- **High score persistence** using localStorage
+![Fruit Tetris Gameplay](file:///Users/daryl/.gemini/antigravity/brain/045ce9a0-31fc-4a54-88db-bf63246a972a/fruit_tetris_gameplay_1764139635048.webp)
 
-## How to Run
+## ✨ Features that Pop!
 
-### Option 1: Replit (Recommended)
-1. Click the "Run" button in Replit
-2. The game will open in the browser preview
-3. Start playing immediately!
+*   **🍎 Fruit Combo System**: Create clusters of 3+ matching fruits for bonus points and satisfying splash effects!
+*   **🏃 Multiple Game Modes**:
+    *   **Marathon**: The classic endurance test. Reach level 15!
+    *   **Sprint**: Clear 40 lines as fast as you can.
+    *   **Zen**: Relax and play without pressure.
+*   **🎨 Visual Delight**: Particle effects, screen shake, and smooth animations make every drop feel impactful.
+*   **📱 Mobile Ready**: Fully playable on your phone with touch controls and swipe gestures.
+*   **🎵 Dynamic Audio**: Sound effects that respond to your gameplay (with mute option).
+*   **💾 Auto-Save**: High scores and settings are saved automatically.
 
-### Option 2: Local Development
-1. Clone or download this repository
-2. Open `index.html` in any modern web browser
-3. No build step or server required!
+## 🚀 Quick Start
 
-### Option 3: Local Server (Optional)
-For development with live reload:
+Get playing in seconds!
+
+### Option 1: Instant Play
+Simply open `index.html` in your browser. No installation needed!
+
+### Option 2: Local Dev Server
+For the best experience with hot reloading:
+
 ```bash
-# Using Python
-python -m http.server 5000
+# Install dependencies
+npm install
 
-# Using Node.js
-npx serve -s . -l 5000
+# Start the dev server
+npm run dev
+```
+
+## 🕹️ Controls
+
+| Action | Keyboard | Mobile |
+| :--- | :--- | :--- |
+| **Move** | `←` / `→` | Swipe Left/Right |
+| **Soft Drop** | `↓` | Swipe Down |
+| **Hard Drop** | `Space` | Double Tap |
+| **Rotate** | `Z` / `X` / `↑` | Tap Screen |
+| **Hold** | `C` | Hold Button |
+| **Pause** | `P` | Pause Button |
+
+---
+
+*Ready to stack some fruit? [Play Now!](#)*
