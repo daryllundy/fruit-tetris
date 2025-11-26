@@ -26,7 +26,9 @@ if (typeof window === 'undefined') {
             playPerfectClear: () => { }, // Add mock
             playPieceLock: () => { }, // Add mock
             playLineClear: () => { }, // Add mock
-            playTetris: () => { } // Add mock
+            playTetris: () => { }, // Add mock
+            playZenRecovery: () => { }, // Add mock for Zen mode recovery
+            playSuccess: () => { } // Add mock for mode completion
         }
     };
     global.document = {
@@ -43,7 +45,7 @@ if (typeof window === 'undefined') {
             })
         })
     };
-    
+
     // Mock localStorage for testing
     const localStorageMock = (() => {
         let store = {};
@@ -57,15 +59,23 @@ if (typeof window === 'undefined') {
     global.localStorage = localStorageMock;
 }
 
+import * as gameModesTests from './game_modes_tests.js';
+
 async function runTests() {
-    const allTests = { ...effectsTests, ...advancedTests };
+    const allTests = { ...effectsTests, ...advancedTests, ...gameModesTests };
     const context = {
         TetrisGame,
         ParticleSystem,
         ScreenShake,
         CelebrationManager,
-        Particle: (await import('../js/effects.js')).Particle, // Import Particle
-        Tetromino: globalThis.Tetromino, // Access global Tetromino
+        TetrisGame,
+        ParticleSystem,
+        ScreenShake,
+        CelebrationManager,
+        Particle: (await import('../js/effects.js')).Particle,
+        Tetromino: (await import('../js/tetromino.js')).Tetromino,
+        TetrominoBag: (await import('../js/tetromino.js')).TetrominoBag,
+        GameModeFactory: (await import('../js/game-modes.js')).GameModeFactory,
         Storage: globalThis.Storage // Access global Storage
     };
 

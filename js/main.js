@@ -54,18 +54,69 @@ class TetrisApp {
     }
 
     bindUIEvents() {
+        // Cache UI elements
+        this.ui = {
+            // Mode selection
+            bestSprintTime: document.getElementById('best-sprint-time'),
+            bestMarathonLevel: document.getElementById('best-marathon-level'),
+            bestZenScore: document.getElementById('best-zen-score'),
+            
+            // Game HUD
+            modeName: document.getElementById('mode-name'),
+            timer: document.getElementById('timer'),
+            timerContainer: document.getElementById('timer-container'),
+            targetValue: document.getElementById('target-value'),
+            targetContainer: document.getElementById('target-container'),
+            levelContainer: document.getElementById('level-container'),
+            lines: document.getElementById('lines'),
+            
+            // Game over
+            gameOverTitle: document.getElementById('game-over-title'),
+            finalScore: document.getElementById('final-score'),
+            completionStats: document.getElementById('completion-stats'),
+            finalTime: document.getElementById('final-time'),
+            finalLines: document.getElementById('final-lines')
+        };
+
         // Main menu buttons
         const playBtn = document.getElementById('play-btn');
         const instructionsBtn = document.getElementById('instructions-btn');
         const muteBtn = document.getElementById('mute-btn');
+        const backBtn = document.getElementById('back-btn');
 
         if (playBtn) {
-            playBtn.addEventListener('click', () => this.startGame());
+            playBtn.addEventListener('click', () => this.showModeSelection());
         }
 
         if (instructionsBtn) {
             instructionsBtn.addEventListener('click', () => this.showInstructions());
         }
+
+        if (backBtn) {
+            backBtn.addEventListener('click', () => this.showScreen('main-menu'));
+        }
+
+        if (muteBtn) {
+            muteBtn.addEventListener('click', () => this.toggleMute());
+        }
+
+        // Mode selection buttons
+        const modeBackBtn = document.getElementById('mode-back-btn');
+        if (modeBackBtn) {
+            modeBackBtn.addEventListener('click', () => this.showScreen('main-menu'));
+        }
+
+        // Mode selection cards
+        const modeCards = document.querySelectorAll('.mode-card');
+        modeCards.forEach(card => {
+            const modeSelectBtn = card.querySelector('.mode-select-btn');
+            if (modeSelectBtn) {
+                modeSelectBtn.addEventListener('click', () => {
+                    const mode = card.getAttribute('data-mode');
+                    this.startGame(mode);
+                });
+            }
+        });
 
         const settingsBtn = document.getElementById('settings-btn');
         if (settingsBtn) {
@@ -103,58 +154,117 @@ class TetrisApp {
             });
         }
 
-        if (muteBtn) {
-            muteBtn.addEventListener('click', () => this.toggleMute());
-        }
-
-        // Instructions back button
-        const backBtn = document.getElementById('back-btn');
-        if (backBtn) {
-            backBtn.addEventListener('click', () => this.showScreen('main-menu'));
-        }
-
-        // Game control buttons
+        // Game screen buttons
+        const restartBtn = document.getElementById('restart-btn');
+        const changeModeBtn = document.getElementById('change-mode-btn');
+        const menuBtn = document.getElementById('menu-btn');
         const pauseBtn = document.getElementById('pause-btn');
         const quitBtn = document.getElementById('quit-btn');
-        const restartBtn = document.getElementById('restart-btn');
-        const menuBtn = document.getElementById('menu-btn');
-
-        if (pauseBtn) {
-            pauseBtn.addEventListener('click', () => this.game.togglePause());
-        }
-
-        if (quitBtn) {
-            quitBtn.addEventListener('click', () => this.quitToMenu());
-        }
 
         if (restartBtn) {
             restartBtn.addEventListener('click', () => this.restartGame());
         }
 
+        if (changeModeBtn) {
+            changeModeBtn.addEventListener('click', () => {
+                this.quitGame();
+                this.showModeSelection();
+            });
+        }
+
         if (menuBtn) {
-            menuBtn.addEventListener('click', () => this.quitToMenu());
+            menuBtn.addEventListener('click', () => {
+                this.quitGame();
+                this.showScreen('main-menu');
+            });
+        }
+
+        if (pauseBtn) {
+            pauseBtn.addEventListener('click', () => {
+                if (this.game) this.game.togglePause();
+            });
+        }
+
+        if (quitBtn) {
+            quitBtn.addEventListener('click', () => {
+                this.quitGame();
+                this.showModeSelection();
+            });
         }
 
         // Update mute button text
         this.updateMuteButton();
     }
 
-    startGame() {
+    loadBestScores() {
+        const bestSprint = localStorage.getItem('tetris_sprint_best');
+        this.ui.bestSprintTime.textContent = bestSprint ? this.formatTime(parseInt(bestSprint)) : '-';
+
+        const bestMarathon = localStorage.getItem('tetris_marathon_level');
+        this.ui.bestMarathonLevel.textContent = bestMarathon || '-';
+
+        // Zen score persistence not implemented yet, placeholder
+        this.ui.bestZenScore.textContent = '-';
+    }
+
+    formatTime(ms) {
+        const totalSeconds = Math.floor(ms / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        const milliseconds = Math.floor((ms % 1000) / 10); // 2 digits
+        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(2, '0')}`;
+    }
+
+    showModeSelection() {
+        this.loadBestScores();
+        this.showScreen('mode-selection-screen');
+    }
+
+    startGame(mode = 'marathon') {
         this.showScreen('game-screen');
-        this.game.start();
-        this.updateUI();
+        this.game.start(mode);
+        this.updateHUDLayout(mode);
+    }
+
+    updateHUDLayout(mode) {
+        // Update mode name display (Requirement 4.4)
+        const modeName = mode.charAt(0).toUpperCase() + mode.slice(1);
+        this.ui.modeName.textContent = modeName;
+
+        // Reset visibility - hide all mode-specific elements first
+        this.ui.timerContainer.classList.add('hidden');
+        this.ui.targetContainer.classList.add('hidden');
+        this.ui.levelContainer.classList.remove('hidden');
+
+        if (mode === 'sprint') {
+            // Sprint Mode: Show timer and target, hide level (Requirement 5.1)
+            this.ui.timerContainer.classList.remove('hidden');
+            this.ui.targetContainer.classList.remove('hidden');
+            this.ui.levelContainer.classList.add('hidden'); // Sprint doesn't use levels
+            this.ui.targetValue.textContent = '40 Lines';
+        } else if (mode === 'marathon') {
+            // Marathon Mode: Show target and level (Requirement 5.2)
+            this.ui.targetContainer.classList.remove('hidden');
+            this.ui.levelContainer.classList.remove('hidden');
+            this.ui.targetValue.textContent = 'Level 15';
+        } else if (mode === 'zen') {
+            // Zen Mode: Show level, hide target (Requirement 5.3)
+            this.ui.levelContainer.classList.remove('hidden');
+            // No specific target for Zen mode
+        }
     }
 
     restartGame() {
-        this.game.start();
+        this.game.start(this.game.modeType); // Restart with the current mode
         this.hideGameOverlay();
         this.updateUI();
     }
 
-    quitToMenu() {
-        this.game.state = 'menu';
+    quitGame() {
+        if (this.game) {
+            this.game.state = 'menu';
+        }
         window.soundManager.stopBackgroundMusic();
-        this.showScreen('main-menu');
         this.hideGameOverlay();
     }
 
@@ -258,10 +368,9 @@ class TetrisApp {
         if (this.game.state === 'paused') {
             console.log('Game state: paused - showing pause screen');
             this.showGameOverlay('pause-screen');
-        } else if (this.game.state === 'gameOver') {
-            console.log('Game state: gameOver - showing game over screen');
-            this.showGameOverlay('game-over-screen');
-            this.updateFinalScore();
+        } else if (this.game.state === 'gameOver' || this.game.state === 'completed') {
+            console.log('Game state: gameOver/completed - showing game over screen');
+            this.showGameOver();
         } else {
             console.log('Game state:', this.game.state, '- hiding overlays');
             this.hideGameOverlay();
@@ -285,6 +394,40 @@ class TetrisApp {
         const linesElement = document.getElementById('lines');
         if (linesElement) {
             linesElement.textContent = this.game.lines;
+        }
+
+        // Update mode name display (Requirement 4.4)
+        if (this.ui.modeName && this.game.currentMode) {
+            const modeName = this.game.currentMode.name;
+            this.ui.modeName.textContent = modeName;
+        }
+
+        // Mode specific updates (Requirements 5.1, 5.2, 5.3)
+        if (this.game.modeType === 'sprint') {
+            // Sprint Mode: Display timer and lines progress (Requirement 5.1)
+            if (this.ui.timer) {
+                this.ui.timer.textContent = this.formatTime(this.game.currentMode.elapsedTime);
+            }
+            if (this.ui.lines) {
+                const linesCleared = this.game.currentMode.linesCleared;
+                const remaining = Math.max(0, 40 - linesCleared);
+                this.ui.lines.textContent = `${linesCleared} / 40 (${remaining} left)`;
+            }
+        } else if (this.game.modeType === 'marathon') {
+            // Marathon Mode: Display level progress and lines until next level (Requirement 5.2)
+            if (this.ui.lines) {
+                const linesPerLevel = 10;
+                const linesUntilNext = linesPerLevel - (this.game.lines % linesPerLevel);
+                this.ui.lines.textContent = `${this.game.lines} (${linesUntilNext} to next level)`;
+            }
+            if (this.ui.targetValue) {
+                this.ui.targetValue.textContent = `Level ${this.game.level} / 15`;
+            }
+        } else if (this.game.modeType === 'zen') {
+            // Zen Mode: Display total lines and score (Requirement 5.3)
+            if (this.ui.lines) {
+                this.ui.lines.textContent = `${this.game.lines} total`;
+            }
         }
 
         // Update combo stats
@@ -344,11 +487,53 @@ class TetrisApp {
         if (gameOverScreen) gameOverScreen.classList.add('hidden');
     }
 
-    updateFinalScore() {
-        const finalScoreElement = document.getElementById('final-score');
-        if (finalScoreElement) {
-            finalScoreElement.textContent = formatScore(this.game.score);
+    showGameOver() {
+        this.showGameOverlay('game-over-screen');
+
+        const isWin = this.game.state === 'completed';
+        
+        // Update game over title (Requirement 5.4)
+        this.ui.gameOverTitle.textContent = isWin ? "COMPLETED!" : "GAME OVER";
+        this.ui.gameOverTitle.style.color = isWin ? "#4ade80" : "#ff6b6b"; // Green for win, Red for loss
+
+        this.ui.finalScore.textContent = this.game.score;
+
+        // Show mode-specific completion stats (Requirements 5.4, 5.5)
+        if (isWin) {
+            this.ui.completionStats.classList.remove('hidden');
+            
+            if (this.game.modeType === 'sprint') {
+                // Sprint Mode: Display time and check for personal best
+                const completionTime = this.game.currentMode.elapsedTime;
+                const bestTime = this.game.currentMode.bestTime;
+                const isNewRecord = !bestTime || completionTime < bestTime;
+                
+                this.ui.finalTime.textContent = this.formatTime(completionTime) + 
+                    (isNewRecord ? ' 🏆 NEW RECORD!' : '');
+                this.ui.finalLines.textContent = this.game.lines + ' lines';
+                
+            } else if (this.game.modeType === 'marathon') {
+                // Marathon Mode: Display level reached and check for personal best
+                const finalLevel = this.game.level;
+                const highestLevel = this.game.currentMode.highestLevel;
+                const isNewRecord = finalLevel > highestLevel;
+                
+                this.ui.finalTime.textContent = 'Level ' + finalLevel + 
+                    (isNewRecord ? ' 🏆 NEW RECORD!' : '');
+                this.ui.finalLines.textContent = this.game.lines + ' lines cleared';
+                
+            } else if (this.game.modeType === 'zen') {
+                // Zen Mode: Display total stats (though Zen doesn't have completion)
+                this.ui.finalTime.textContent = 'Zen Mode';
+                this.ui.finalLines.textContent = this.game.lines + ' lines cleared';
+            }
+        } else {
+            this.ui.completionStats.classList.add('hidden');
         }
+    }
+
+    updateFinalScore() {
+        // Deprecated, used showGameOver instead
     }
 
     destroy() {
@@ -378,7 +563,7 @@ class TetrisRenderer {
         this.nextCtx = this.nextCanvas.getContext('2d');
 
         this.blockSize = 30;
-        
+
         // Perfect clear flash effect
         this.perfectClearFlash = null;
 
@@ -477,6 +662,11 @@ class TetrisRenderer {
         // Draw perfect clear flash effect
         if (this.perfectClearFlash) {
             this.drawPerfectClearFlash();
+        }
+
+        // Draw zen recovery effect
+        if (this.game.zenRecoveryEffect && this.game.zenRecoveryEffect.active) {
+            this.drawZenRecoveryEffect();
         }
 
         // Draw combo notification
@@ -585,7 +775,7 @@ class TetrisRenderer {
 
         this.game.clearingLines.forEach(lineY => {
             this.ctx.fillRect(0, lineY * this.blockSize, this.canvas.width, this.blockSize);
-            
+
             // Add border effect
             this.ctx.strokeStyle = color + (alpha * 0.95) + ')';
             this.ctx.lineWidth = 2;
@@ -636,12 +826,71 @@ class TetrisRenderer {
             const ringProgress = progress / 0.5;
             const ringRadius = ringProgress * this.canvas.width * 0.8;
             const ringAlpha = (1 - ringProgress) * 0.6;
-            
+
             this.ctx.strokeStyle = `hsla(${hue}, 100%, 70%, ${ringAlpha})`;
             this.ctx.lineWidth = 4;
             this.ctx.beginPath();
             this.ctx.arc(this.canvas.width / 2, this.canvas.height / 2, ringRadius, 0, Math.PI * 2);
             this.ctx.stroke();
+        }
+    }
+
+    drawZenRecoveryEffect() {
+        const elapsed = Date.now() - this.game.zenRecoveryEffect.timestamp;
+        const duration = 1500; // 1.5 seconds for gentle effect
+        const progress = elapsed / duration;
+
+        if (progress >= 1) {
+            this.game.zenRecoveryEffect.active = false;
+            return;
+        }
+
+        // Gentle pulsing effect with calming colors
+        const pulseProgress = Math.sin(progress * Math.PI * 2) * 0.5 + 0.5;
+        const alpha = (1 - progress) * 0.4 * pulseProgress;
+
+        // Soft blue-green gradient for calming effect
+        const gradient = this.ctx.createRadialGradient(
+            this.canvas.width / 2, this.canvas.height / 2, 0,
+            this.canvas.width / 2, this.canvas.height / 2, this.canvas.width * 0.7
+        );
+        gradient.addColorStop(0, `rgba(135, 206, 250, ${alpha})`); // Light sky blue
+        gradient.addColorStop(0.5, `rgba(152, 251, 152, ${alpha * 0.7})`); // Pale green
+        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        
+        this.ctx.fillStyle = gradient;
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // Add gentle expanding waves
+        const waveCount = 3;
+        for (let i = 0; i < waveCount; i++) {
+            const waveDelay = i * 0.2;
+            const waveProgress = Math.max(0, Math.min(1, (progress - waveDelay) / (1 - waveDelay)));
+            
+            if (waveProgress > 0) {
+                const waveRadius = waveProgress * this.canvas.width * 0.6;
+                const waveAlpha = (1 - waveProgress) * 0.3;
+
+                this.ctx.strokeStyle = `rgba(135, 206, 250, ${waveAlpha})`;
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+                this.ctx.arc(this.canvas.width / 2, this.canvas.height / 2, waveRadius, 0, Math.PI * 2);
+                this.ctx.stroke();
+            }
+        }
+
+        // Add calming text overlay
+        if (progress < 0.7) {
+            const textAlpha = progress < 0.3 ? progress / 0.3 : (progress < 0.5 ? 1 : (0.7 - progress) / 0.2);
+            
+            this.ctx.save();
+            this.ctx.globalAlpha = textAlpha * 0.8;
+            this.ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+            this.ctx.font = 'bold 24px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            this.ctx.fillText('✨ Board Cleared ✨', this.canvas.width / 2, this.canvas.height / 2);
+            this.ctx.restore();
         }
     }
 
@@ -671,14 +920,14 @@ class TetrisRenderer {
         const isB2B = notification.text && notification.text.includes('B2B');
         const isPerfectClear = notification.text && notification.text.includes('PERFECT CLEAR');
         const isTSpin = notification.text && notification.text.includes('T-SPIN');
-        
+
         // Background glow - different color for special notifications
         if (isPerfectClear) {
             // Epic rainbow glow for perfect clear
             const hue = (elapsed * 0.3) % 360;
             this.ctx.fillStyle = `hsla(${hue}, 100%, 50%, ${alpha * 0.6})`;
             this.ctx.fillRect(-160, -65, 320, 130);
-            
+
             // Add extra sparkle effect with smoother animation
             const sparkleScale = 1 + Math.sin(elapsed * 0.008) * 0.1;
             this.ctx.scale(sparkleScale, sparkleScale);
@@ -686,7 +935,7 @@ class TetrisRenderer {
             // Red glow for back-to-back
             this.ctx.fillStyle = `rgba(255, 107, 107, ${alpha * 0.5})`;
             this.ctx.fillRect(-130, -55, 260, 110);
-            
+
             // Add pulsing effect for B2B with smoother animation
             const pulseScale = 1 + Math.sin(elapsed * 0.006) * 0.08;
             this.ctx.scale(pulseScale, pulseScale);
@@ -720,7 +969,7 @@ class TetrisRenderer {
                 this.ctx.lineWidth = 3;
                 this.ctx.strokeText(notification.text, 0, -20);
                 this.ctx.fillText(notification.text, 0, -20);
-                
+
                 // Add sparkle emoji with animation
                 this.ctx.font = '42px Arial';
                 const sparkleOffset = Math.sin(elapsed * 0.01) * 5;

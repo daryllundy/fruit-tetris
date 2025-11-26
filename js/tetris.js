@@ -1,14 +1,23 @@
 // Main Tetris game logic
 
+import { Tetromino } from './tetromino.js';
+import { TetrominoBag } from './tetromino.js';
+import { GameModeFactory } from './game-modes.js';
+
 export class TetrisGame {
-    constructor() {
+    constructor(settings = {}) {
         // Game dimensions
         this.BOARD_WIDTH = 10;
         this.BOARD_HEIGHT = 20;
         this.BLOCK_SIZE = 30;
 
         // Game state
-        this.state = 'menu'; // 'menu', 'playing', 'paused', 'gameOver'
+        this.state = 'menu'; // 'menu', 'playing', 'paused', 'gameOver', 'completed'
+        this.settings = settings;
+
+        // Game Mode
+        this.modeType = 'marathon';
+        this.currentMode = GameModeFactory.createMode(this.modeType, this);
         this.grid = create2DArray(this.BOARD_WIDTH, this.BOARD_HEIGHT);
         this.score = 0;
         this.level = 1;
@@ -34,6 +43,7 @@ export class TetrisGame {
 
         // Timing
         this.dropSpeed = 1000; // ms between automatic drops
+        this.dropInterval = 1000; // New property for drop speed
         this.lastTime = 0;
         this.softDropBonus = 0;
 
@@ -48,7 +58,8 @@ export class TetrisGame {
             enableParticles: true,
             enableScreenShake: true,
             effectsIntensity: 1.0,
-            maxParticles: 500
+            maxParticles: 500,
+            ...settings // Merge provided settings
         };
 
         // Animation states
@@ -66,12 +77,21 @@ export class TetrisGame {
         }
     }
 
-    start() {
+    start(mode = null) {
+        if (mode) this.setMode(mode);
+
         this.reset();
+        this.currentMode.initialize();
         this.state = 'playing';
         this.spawnNewPiece();
         window.soundManager.playBackgroundMusic();
         this.updateMusicTension(); // Initialize music tension
+    }
+
+    setMode(type) {
+        this.modeType = type;
+        this.currentMode = GameModeFactory.createMode(type, this);
+        this.reset();
     }
 
     reset() {
@@ -96,7 +116,7 @@ export class TetrisGame {
         this.lastMoveWasRotation = false;
         this.softDropBonus = 0;
         this.backToBack = false;
-        
+
         // Clear notification states
         this.comboNotification = null;
         this.ghostPiece = null;
@@ -104,6 +124,14 @@ export class TetrisGame {
 
     update(deltaTime) {
         if (this.state !== 'playing') return;
+
+        this.currentMode.update(deltaTime);
+
+        // Check win condition
+        if (this.currentMode.isCompleted) {
+            this.handleModeComplete();
+            return;
+        }
 
         // Handle line clearing animation
         if (this.clearingLines.length > 0) {
@@ -117,7 +145,7 @@ export class TetrisGame {
         this.dropTimer += deltaTime;
 
         // Automatic piece drop
-        if (this.dropTimer >= this.dropSpeed) {
+        if (this.dropTimer >= this.dropInterval) {
             this.dropTimer = 0;
             this.dropPiece();
         }
@@ -284,10 +312,13 @@ export class TetrisGame {
 
         // Remove completed lines
         this.clearingLines.sort((a, b) => b - a); // Sort descending
-        this.clearingLines.forEach(lineIndex => {
-            this.grid.splice(lineIndex, 1);
+        // Clear lines from grid
+        this.clearingLines.forEach(y => {
+            this.grid.splice(y, 1);
             this.grid.unshift(Array(this.BOARD_WIDTH).fill(0));
         });
+
+        this.currentMode.onLineClear(this.clearingLines);
 
         // Update score and level
         this.updateScore(linesCleared, this.pendingComboBonus || 0, this.pendingTSpin, this.pendingPerfectClear);
@@ -389,9 +420,16 @@ export class TetrisGame {
     }
 
     updateDropSpeed() {
+        // Check if mode overrides speed
+        const modeSpeed = this.currentMode.getDropSpeed();
+        if (modeSpeed !== null) {
+            this.dropInterval = modeSpeed;
+            return;
+        }
+
         // Speed increases with level (classic Tetris formula)
-        const baseSpeed = 1000;
-        this.dropSpeed = Math.max(50, baseSpeed - (this.level - 1) * 50);
+        const speed = Math.max(100, 1000 - (this.level - 1) * 100);
+        this.dropInterval = speed;
     }
 
     // Player actions
@@ -577,6 +615,14 @@ export class TetrisGame {
     }
 
     gameOver() {
+        // Check if mode handles game over (Zen recovery)
+        if (this.currentMode.triggerRecovery && this.currentMode.triggerRecovery()) {
+            // Recovery successful, continue playing
+            this.state = 'playing';
+            this.spawnNewPiece();
+            return;
+        }
+
         this.state = 'gameOver';
         window.soundManager.stopBackgroundMusic();
         window.soundManager.playGameOver();
@@ -586,6 +632,20 @@ export class TetrisGame {
         if (this.score > highScore) {
             Storage.set('tetris-high-score', this.score);
         }
+    }
+
+    handleModeComplete() {
+        this.state = 'completed';
+        window.soundManager.stopBackgroundMusic();
+        window.soundManager.playSuccess();
+    }
+
+    triggerZenRecoveryEffect() {
+        // Set flag for renderer to show visual effect
+        this.zenRecoveryEffect = {
+            timestamp: Date.now(),
+            active: true
+        };
     }
 
     getHighScore() {
@@ -729,7 +789,7 @@ export class TetrisGame {
         if (positions.length < 5) return false;
 
         // Look for T or + shaped patterns
-        const posSet = new Set(positions.map(p => `${p.x},${p.y}`));
+        const posSet = new Set(positions.map(p => `${p.x},${p.y} `));
 
         for (const center of positions) {
             let arms = 0;
@@ -739,7 +799,7 @@ export class TetrisGame {
             ];
 
             for (const dir of directions) {
-                if (posSet.has(`${center.x + dir.dx},${center.y + dir.dy}`)) {
+                if (posSet.has(`${center.x + dir.dx},${center.y + dir.dy} `)) {
                     arms++;
                 }
             }

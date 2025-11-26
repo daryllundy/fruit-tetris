@@ -1,6 +1,6 @@
 # Implementation Plan
 
-- [ ] 1. Create game mode system architecture
+- [x] 1. Create game mode system architecture
   - Create `js/game-modes.js` file with base `GameMode` class and mode implementations (SprintMode, MarathonMode, ZenMode)
   - Implement `GameModeFactory` for mode creation
   - Add mode lifecycle methods (initialize, update, onLineClear, onPieceLock, reset)
@@ -8,11 +8,11 @@
   - Add statistics tracking and display methods
   - _Requirements: 1.1, 2.1, 3.1, 4.2_
 
-- [ ] 1.1 Write property test for mode initialization
+- [x] 1.1 Write property test for mode initialization
   - **Property 7: Mode initialization**
   - **Validates: Requirements 4.2**
 
-- [ ] 2. Implement Sprint Mode logic
+- [x] 2. Implement Sprint Mode logic
   - Implement SprintMode class with 40-line target
   - Add timer tracking (start, update, stop)
   - Implement completion detection on line clear
@@ -20,11 +20,11 @@
   - Set fixed drop speed of 500ms
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 6.1_
 
-- [ ] 2.1 Write property test for personal best persistence
+- [x] 2.1 Write property test for personal best persistence
   - **Property 1: Personal best time persistence**
   - **Validates: Requirements 1.5**
 
-- [ ] 3. Implement Marathon Mode logic
+- [x] 3. Implement Marathon Mode logic
   - Implement MarathonMode class with level 15 target
   - Add level progression (10 lines per level)
   - Implement speed increase formula
@@ -32,15 +32,15 @@
   - Add highest level persistence to localStorage
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 6.2_
 
-- [ ] 3.1 Write property test for level progression
+- [x] 3.1 Write property test for level progression
   - **Property 2: Marathon level progression**
   - **Validates: Requirements 2.2, 2.3**
 
-- [ ] 3.2 Write property test for spawn collision game over
+- [x] 3.2 Write property test for spawn collision game over
   - **Property 3: Game over on spawn collision**
   - **Validates: Requirements 2.5**
 
-- [ ] 4. Implement Zen Mode logic
+- [x] 4. Implement Zen Mode logic
   - Implement ZenMode class with no win/loss conditions
   - Add top row clearing mechanism when spawn fails
   - Set fixed drop speed of 800ms
@@ -48,19 +48,19 @@
   - Ensure standard scoring applies
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 6.3_
 
-- [ ] 4.1 Write property test for Zen mode recovery
+- [x] 4.1 Write property test for Zen mode recovery
   - **Property 4: Zen mode recovery**
   - **Validates: Requirements 3.2, 3.3**
 
-- [ ] 4.2 Write property test for Zen mode scoring
+- [x] 4.2 Write property test for Zen mode scoring
   - **Property 5: Zen mode scoring consistency**
   - **Validates: Requirements 3.4**
 
-- [ ] 4.3 Write property test for Zen mode state persistence
+- [x] 4.3 Write property test for Zen mode state persistence
   - **Property 6: Zen mode state persistence**
   - **Validates: Requirements 3.5**
 
-- [ ] 5. Integrate modes into TetrisGame class
+- [x] 5. Integrate modes into TetrisGame class
   - Add `currentMode` and `modeType` properties to TetrisGame
   - Implement `setMode()` method
   - Modify `start()` to accept mode parameter and initialize mode
@@ -72,90 +72,67 @@
   - Modify `updateDropSpeed()` to respect mode speed settings
   - _Requirements: 1.1, 1.2, 1.3, 2.2, 2.3, 3.2, 4.2_
 
-- [ ] 5.1 Write property test for mode transition state reset
+- [x] 5.1 Write property test for mode transition state reset
   - **Property 8: Mode transition state reset**
   - **Validates: Requirements 4.3, 4.5**
 
-- [ ] 6. Create mode selection UI
-  - Add mode selection screen HTML in `index.html`
-  - Create mode selection cards for each mode (icon, name, description, best record)
-  - Add click handlers to mode selection buttons
-  - Style mode selection screen with CSS
-  - _Requirements: 4.1, 4.2_
+- [x] 6. Add missing TetrisGame methods
+  - Add `handleModeComplete()` method to handle mode completion
+  - Update `gameOver()` to check for Zen mode recovery via `triggerRecovery()`
+  - Ensure `update()` checks win conditions via `currentMode.checkWinCondition()`
+  - _Requirements: 1.3, 1.4, 2.4, 3.2_
 
-- [ ] 7. Update main menu and navigation
-  - Modify main menu to show "Select Mode" instead of direct "Play"
-  - Update TetrisApp to handle mode selection flow
-  - Add "Change Mode" button to pause menu
-  - Implement navigation from game end back to mode selection
-  - _Requirements: 4.1, 4.3_
+- [x] 7. Create mode selection UI and navigation
+  - Add click handlers for mode selection cards in `index.html`
+  - Update main menu "Play" button to show mode selection screen
+  - Implement `loadBestScores()` method in TetrisApp to display best records
+  - Add "Back" button handler for mode selection screen
+  - Add "Change Mode" button handler in game over screen
+  - Update `startGame(mode)` to accept mode parameter
+  - _Requirements: 4.1, 4.2, 4.3_
 
-- [ ] 8. Implement mode-specific HUD elements
-  - Add mode name display to game HUD
-  - Create mode-specific stats panel component
-  - Implement Sprint mode timer display (MM:SS.ms format)
-  - Implement Marathon mode progress display (level X/15, lines until next)
-  - Implement Zen mode stats display (total lines, score)
-  - Update renderer to show mode-specific stats
+- [x] 8. Implement mode-specific HUD updates
+  - Update `updateHUDLayout(mode)` to show/hide mode-specific UI elements
+  - Implement Sprint timer display updates in `updateUI()`
+  - Implement Marathon progress display (level X/15, lines until next)
+  - Add mode name display update
+  - Format time display for Sprint mode (MM:SS.ms format)
   - _Requirements: 4.4, 5.1, 5.2, 5.3_
 
-- [ ] 8.1 Write property test for active mode display
+- [x] 8.1 Write property test for active mode display
   - **Property 9: Active mode display**
   - **Validates: Requirements 4.4**
 
-- [ ] 9. Create mode completion screen
-  - Add completion screen HTML overlay
-  - Implement completion screen display logic
-  - Show final statistics (score, lines, mode-specific stats)
-  - Display personal best indicator
-  - Add "Play Again", "Change Mode", and "Quit" buttons
-  - Style completion screen with celebratory design
+- [x] 9. Update game over screen for mode completion
+  - Modify `showGameOver()` to handle 'completed' state differently
+  - Display mode-specific completion stats (time for Sprint, level for Marathon)
+  - Show personal best indicator when new record is achieved
+  - Update game over title to show "COMPLETED!" for wins
   - _Requirements: 5.4, 5.5_
 
-- [ ] 9.1 Write property test for completion summary
+- [x] 9.1 Write property test for completion summary
   - **Property 10: Mode completion summary**
   - **Validates: Requirements 5.4**
 
-- [ ] 9.2 Write property test for completion feedback
+- [x] 9.2 Write property test for completion feedback
   - **Property 11: Mode completion feedback**
   - **Validates: Requirements 6.4**
 
-- [ ] 10. Add success sound effect
-  - Add success sound file to `client/public/sounds/` (or use existing success.mp3)
-  - Add `playSuccess()` method to SoundManager
-  - Call success sound on mode completion
+- [x] 10. Add success sound effect
+  - Verify `playSuccess()` method exists in SoundManager
+  - Call success sound in `handleModeComplete()` method
   - _Requirements: 6.4_
 
-- [ ] 11. Update statistics display
-  - Modify stats panel to show mode-specific information
-  - Add personal best displays for Sprint and Marathon
-  - Ensure stats update in real-time during gameplay
-  - Format time display for Sprint mode (MM:SS.ms)
-  - _Requirements: 5.1, 5.2, 5.3, 5.5_
-
-- [ ] 12. Add visual feedback for Zen mode recovery
-  - Implement animation for top row clearing in Zen mode
-  - Add gentle visual effect when recovery triggers
-  - Ensure animation completes before piece placement
+- [x] 11. Add visual feedback for Zen mode recovery
+  - Add visual effect in renderer when Zen mode recovery triggers
+  - Play gentle sound effect during recovery
   - _Requirements: 3.2, 6.4_
 
-- [ ] 13. Checkpoint - Ensure all tests pass
-  - Ensure all tests pass, ask the user if questions arise.
+- [x] 12. Write remaining property tests
+  - Write property test for level progression (Property 2)
+  - Write property test for spawn collision game over (Property 3)
+  - Write property test for Zen mode scoring (Property 5)
+  - Write property test for Zen mode state persistence (Property 6)
 
-- [ ] 14. Polish and refinement
-  - Test all three modes end-to-end
-  - Verify mobile controls work in all modes
-  - Ensure smooth transitions between screens
-  - Verify statistics persistence across sessions
-  - Test edge cases (localStorage unavailable, rapid mode switching)
-  - _Requirements: All_
-
-- [ ] 14.1 Write unit tests for edge cases
-  - Test invalid mode type defaults to Marathon
-  - Test localStorage unavailable graceful degradation
-  - Test Zen mode recovery with insufficient space
-  - Test mode switching during active game
-  - Test statistics with corrupted data
-
-- [ ] 15. Final checkpoint - Ensure all tests pass
+- [x] 13. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.

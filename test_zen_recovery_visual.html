@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zen Recovery Visual Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .pass {
+            background: #2d5016;
+            border: 1px solid #4caf50;
+        }
+        .fail {
+            background: #5d1616;
+            border: 1px solid #f44336;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px 5px;
+            font-size: 16px;
+            cursor: pointer;
+            background: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Zen Mode Recovery Visual Feedback Test</h1>
+    <p>This test verifies that Zen mode recovery triggers both visual and audio feedback.</p>
+    
+    <div id="results"></div>
+    
+    <button onclick="runTests()">Run Tests</button>
+    <button onclick="location.href='index.html'">Open Game</button>
+    
+    <script type="module">
+        import { TetrisGame } from './js/tetris.js';
+        import { GameModeFactory } from './js/game-modes.js';
+        
+        window.runTests = async function() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<h2>Running Tests...</h2>';
+            
+            const results = [];
+            
+            // Test 1: Verify sound manager has playZenRecovery method
+            try {
+                const hasMethod = typeof window.soundManager.playZenRecovery === 'function';
+                results.push({
+                    name: 'Sound Manager has playZenRecovery method',
+                    pass: hasMethod,
+                    message: hasMethod ? 'Method exists' : 'Method not found'
+                });
+            } catch (e) {
+                results.push({
+                    name: 'Sound Manager has playZenRecovery method',
+                    pass: false,
+                    message: e.message
+                });
+            }
+            
+            // Test 2: Verify TetrisGame has triggerZenRecoveryEffect method
+            try {
+                const game = new TetrisGame();
+                const hasMethod = typeof game.triggerZenRecoveryEffect === 'function';
+                results.push({
+                    name: 'TetrisGame has triggerZenRecoveryEffect method',
+                    pass: hasMethod,
+                    message: hasMethod ? 'Method exists' : 'Method not found'
+                });
+            } catch (e) {
+                results.push({
+                    name: 'TetrisGame has triggerZenRecoveryEffect method',
+                    pass: false,
+                    message: e.message
+                });
+            }
+            
+            // Test 3: Verify Zen mode recovery triggers visual effect
+            try {
+                const game = new TetrisGame();
+                const zenMode = GameModeFactory.createMode('zen', game);
+                
+                // Mock sound manager to avoid errors
+                const originalSoundManager = window.soundManager;
+                window.soundManager = {
+                    playZenRecovery: () => {},
+                    playBackgroundMusic: () => {},
+                    stopBackgroundMusic: () => {},
+                    adjustMusicSpeed: () => {},
+                    isMuted: () => false
+                };
+                
+                // Trigger recovery
+                zenMode.triggerRecovery();
+                
+                // Check if visual effect was triggered
+                const hasEffect = game.zenRecoveryEffect && game.zenRecoveryEffect.active;
+                
+                results.push({
+                    name: 'Zen mode recovery triggers visual effect',
+                    pass: hasEffect,
+                    message: hasEffect ? 'Visual effect triggered' : 'Visual effect not triggered'
+                });
+                
+                // Restore sound manager
+                window.soundManager = originalSoundManager;
+            } catch (e) {
+                results.push({
+                    name: 'Zen mode recovery triggers visual effect',
+                    pass: false,
+                    message: e.message
+                });
+            }
+            
+            // Test 4: Verify visual effect has timestamp
+            try {
+                const game = new TetrisGame();
+                const zenMode = GameModeFactory.createMode('zen', game);
+                
+                // Mock sound manager
+                const originalSoundManager = window.soundManager;
+                window.soundManager = {
+                    playZenRecovery: () => {},
+                    playBackgroundMusic: () => {},
+                    stopBackgroundMusic: () => {},
+                    adjustMusicSpeed: () => {},
+                    isMuted: () => false
+                };
+                
+                zenMode.triggerRecovery();
+                
+                const hasTimestamp = game.zenRecoveryEffect && 
+                                    typeof game.zenRecoveryEffect.timestamp === 'number';
+                
+                results.push({
+                    name: 'Visual effect has timestamp',
+                    pass: hasTimestamp,
+                    message: hasTimestamp ? 'Timestamp present' : 'Timestamp missing'
+                });
+                
+                window.soundManager = originalSoundManager;
+            } catch (e) {
+                results.push({
+                    name: 'Visual effect has timestamp',
+                    pass: false,
+                    message: e.message
+                });
+            }
+            
+            // Display results
+            let html = '<h2>Test Results</h2>';
+            let passCount = 0;
+            
+            results.forEach(result => {
+                if (result.pass) passCount++;
+                html += `
+                    <div class="test-result ${result.pass ? 'pass' : 'fail'}">
+                        <strong>${result.pass ? '✓' : '✗'} ${result.name}</strong><br>
+                        ${result.message}
+                    </div>
+                `;
+            });
+            
+            html = `<h2>Test Results: ${passCount}/${results.length} passed</h2>` + html;
+            resultsDiv.innerHTML = html;
+        };
+    </script>
+</body>
+</html>

@@ -17,11 +17,37 @@
         <div id="main-menu" class="screen">
             <h1>🍎 Fruit Tetris 🍌</h1>
             <div class="menu-buttons">
-                <button id="play-btn" class="menu-button">Play</button>
+                <button id="play-btn" class="menu-button">Select Mode</button>
                 <button id="settings-btn" class="menu-button">Settings</button>
                 <button id="instructions-btn" class="menu-button">Instructions</button>
                 <button id="mute-btn" class="menu-button">🔊 Sound</button>
             </div>
+        </div>
+
+        <!-- Mode Selection Screen -->
+        <div id="mode-selection-screen" class="screen hidden">
+            <h2>Select Game Mode</h2>
+            <div class="mode-cards">
+                <div class="mode-card" data-mode="marathon">
+                    <h3>🏃 Marathon</h3>
+                    <p>Reach Level 15</p>
+                    <div class="mode-best">Best: <span id="best-marathon-level">-</span></div>
+                    <button class="mode-select-btn">Play Marathon</button>
+                </div>
+                <div class="mode-card" data-mode="sprint">
+                    <h3>⚡ Sprint</h3>
+                    <p>Clear 40 Lines</p>
+                    <div class="mode-best">Best: <span id="best-sprint-time">-</span></div>
+                    <button class="mode-select-btn">Play Sprint</button>
+                </div>
+                <div class="mode-card" data-mode="zen">
+                    <h3>🧘 Zen</h3>
+                    <p>Relaxed Play</p>
+                    <div class="mode-best">Score: <span id="best-zen-score">-</span></div>
+                    <button class="mode-select-btn">Play Zen</button>
+                </div>
+            </div>
+            <button id="mode-back-btn" class="menu-button">Back</button>
         </div>
 
         <!-- Settings Screen -->
@@ -99,16 +125,28 @@
                     </div>
                     <div class="panel-section">
                         <div class="score-item">
+                            <label>Mode:</label>
+                            <span id="mode-name">Marathon</span>
+                        </div>
+                        <div class="score-item">
                             <label>Score:</label>
                             <span id="score">0</span>
                         </div>
-                        <div class="score-item">
+                        <div class="score-item" id="level-container">
                             <label>Level:</label>
                             <span id="level">1</span>
                         </div>
                         <div class="score-item">
                             <label>Lines:</label>
                             <span id="lines">0</span>
+                        </div>
+                        <div class="score-item hidden" id="timer-container">
+                            <label>Time:</label>
+                            <span id="timer">00:00.00</span>
+                        </div>
+                        <div class="score-item hidden" id="target-container">
+                            <label>Target:</label>
+                            <span id="target-value">-</span>
                         </div>
                     </div>
                     <div class="panel-section combo-section">
@@ -144,9 +182,14 @@
                             <p>Press P to resume</p>
                         </div>
                         <div id="game-over-screen" class="hidden">
-                            <h2>GAME OVER</h2>
-                            <p>Final Score: <span id="final-score">0</span></p>
+                            <h2 id="game-over-title">GAME OVER</h2>
+                            <p id="game-over-message">Final Score: <span id="final-score">0</span></p>
+                            <div id="completion-stats" class="hidden">
+                                <p>Time: <span id="final-time">-</span></p>
+                                <p>Lines: <span id="final-lines">-</span></p>
+                            </div>
                             <button id="restart-btn" class="game-button">Play Again</button>
+                            <button id="change-mode-btn" class="game-button">Change Mode</button>
                             <button id="menu-btn" class="game-button">Main Menu</button>
                         </div>
                     </div>
@@ -183,7 +226,7 @@
     <!-- Scripts -->
     <script src="js/utils.js"></script>
     <script src="js/sound.js"></script>
-    <script src="js/tetromino.js"></script>
+    <script type="module" src="js/tetromino.js"></script>
     <script src="js/controls.js"></script>
     <script type="module" src="js/tetris.js"></script>
     <script type="module" src="js/effects.js"></script>

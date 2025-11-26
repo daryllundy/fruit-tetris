@@ -30,39 +30,39 @@
   - Pass selected starting level to `game.start()` when play button is clicked
   - _Requirements: 1.2, 6.2, 6.4_
 
-- [ ]* 5. Write property-based tests for starting level feature
+- [ ] 5. Write property-based tests for starting level feature
   - Set up fast-check testing library with minimum 100 iterations per property
   - Create custom arbitraries for level values (1-15) and invalid levels
 
-- [ ]* 5.1 Write property test for game initialization
+- [ ] 5.1 Write property test for game initialization
   - **Property 1: Game initialization respects starting level**
   - **Validates: Requirements 1.3, 1.4, 1.5**
 
-- [ ]* 5.2 Write property test for selector display updates
+- [ ] 5.2 Write property test for selector display updates
   - **Property 2: Selector updates display**
   - **Validates: Requirements 1.2, 6.2**
 
-- [ ]* 5.3 Write property test for persistence round-trip
+- [ ] 5.3 Write property test for persistence round-trip
   - **Property 3: Persistence round-trip**
   - **Validates: Requirements 2.1, 2.2, 2.4**
 
-- [ ]* 5.4 Write property test for lines counter initialization
+- [ ] 5.4 Write property test for lines counter initialization
   - **Property 4: Lines counter initialization**
   - **Validates: Requirements 5.1**
 
-- [ ]* 5.5 Write property test for score multiplier scaling
+- [ ] 5.5 Write property test for score multiplier scaling
   - **Property 5: Score multiplier scales with level**
   - **Validates: Requirements 4.2, 4.4**
 
-- [ ]* 5.6 Write property test for level progression
+- [ ] 5.6 Write property test for level progression
   - **Property 6: Level progression from starting level**
   - **Validates: Requirements 5.2**
 
-- [ ]* 5.7 Write property test for drop speed formula
+- [ ] 5.7 Write property test for drop speed formula
   - **Property 7: Drop speed formula consistency**
   - **Validates: Requirements 4.1**
 
-- [ ]* 6. Write unit tests for edge cases and specific scenarios
+- [ ] 6. Write unit tests for edge cases and specific scenarios
   - Test default starting level is 1 when no preference saved
   - Test level bounds validation (0 → 1, 16 → 15, negative → 1)
   - Test localStorage failure handling
