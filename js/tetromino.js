@@ -189,6 +189,17 @@ export const TETROMINO_SHAPES = {
     ]
 };
 
+
+class Vector2 {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+    }
+    clone() {
+        return new Vector2(this.x, this.y);
+    }
+}
+
 export class Tetromino {
     constructor(type = null) {
         this.type = type || this.getRandomType();
@@ -370,3 +381,11 @@ export class TetrominoBag {
 
 // Export for ES modules (testing)
 // Globals removed in favor of ESM imports
+
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}

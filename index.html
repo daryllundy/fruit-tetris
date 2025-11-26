@@ -16,6 +16,10 @@
         <!-- Main Menu -->
         <div id="main-menu" class="screen">
             <h1>🍎 Fruit Tetris 🍌</h1>
+            <div class="level-selector-container">
+                <label for="start-level">Starting Level: <span id="start-level-value">1</span></label>
+                <input type="range" id="start-level" min="1" max="15" value="1" class="level-slider">
+            </div>
             <div class="menu-buttons">
                 <button id="play-btn" class="menu-button">Select Mode</button>
                 <button id="settings-btn" class="menu-button">Settings</button>
@@ -184,6 +188,9 @@
                         <div id="game-over-screen" class="hidden">
                             <h2 id="game-over-title">GAME OVER</h2>
                             <p id="game-over-message">Final Score: <span id="final-score">0</span></p>
+                            <p id="level-stats">Level: <span id="final-level-val">1</span> <span
+                                    id="start-level-display" class="hidden">(Started: <span
+                                        id="start-level-val">1</span>)</span></p>
                             <div id="completion-stats" class="hidden">
                                 <p>Time: <span id="final-time">-</span></p>
                                 <p>Lines: <span id="final-lines">-</span></p>

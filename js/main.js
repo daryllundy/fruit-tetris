@@ -60,7 +60,9 @@ class TetrisApp {
             bestSprintTime: document.getElementById('best-sprint-time'),
             bestMarathonLevel: document.getElementById('best-marathon-level'),
             bestZenScore: document.getElementById('best-zen-score'),
-            
+            startLevelInput: document.getElementById('start-level'),
+            startLevelValue: document.getElementById('start-level-value'),
+
             // Game HUD
             modeName: document.getElementById('mode-name'),
             timer: document.getElementById('timer'),
@@ -69,15 +71,25 @@ class TetrisApp {
             targetContainer: document.getElementById('target-container'),
             levelContainer: document.getElementById('level-container'),
             lines: document.getElementById('lines'),
-            
+
             // Game over
             gameOverTitle: document.getElementById('game-over-title'),
             finalScore: document.getElementById('final-score'),
             completionStats: document.getElementById('completion-stats'),
             finalTime: document.getElementById('final-time'),
-            finalLines: document.getElementById('final-lines')
+            finalTime: document.getElementById('final-time'),
+            finalLines: document.getElementById('final-lines'),
+            finalLevelVal: document.getElementById('final-level-val'),
+            startLevelDisplay: document.getElementById('start-level-display'),
+            startLevelVal: document.getElementById('start-level-val')
         };
 
+        this.setupEventListeners();
+        this.loadBestScores();
+        this.loadStartingLevel();
+    }
+
+    setupEventListeners() {
         // Main menu buttons
         const playBtn = document.getElementById('play-btn');
         const instructionsBtn = document.getElementById('instructions-btn');
@@ -117,6 +129,18 @@ class TetrisApp {
                 });
             }
         });
+
+        // Starting level slider
+        if (this.ui.startLevelInput) {
+            this.ui.startLevelInput.addEventListener('input', (e) => {
+                const level = parseInt(e.target.value);
+                this.ui.startLevelValue.textContent = level;
+            });
+            this.ui.startLevelInput.addEventListener('change', (e) => {
+                const level = parseInt(e.target.value);
+                localStorage.setItem('tetris_starting_level', level);
+            });
+        }
 
         const settingsBtn = document.getElementById('settings-btn');
         if (settingsBtn) {
@@ -207,6 +231,15 @@ class TetrisApp {
         this.ui.bestZenScore.textContent = '-';
     }
 
+    loadStartingLevel() {
+        const savedLevel = localStorage.getItem('tetris_starting_level');
+        if (savedLevel && this.ui.startLevelInput) {
+            const level = Math.max(1, Math.min(15, parseInt(savedLevel)));
+            this.ui.startLevelInput.value = level;
+            this.ui.startLevelValue.textContent = level;
+        }
+    }
+
     formatTime(ms) {
         const totalSeconds = Math.floor(ms / 1000);
         const minutes = Math.floor(totalSeconds / 60);
@@ -220,9 +253,10 @@ class TetrisApp {
         this.showScreen('mode-selection-screen');
     }
 
-    startGame(mode = 'marathon') {
+    startGame(mode) {
         this.showScreen('game-screen');
-        this.game.start(mode);
+        const startLevel = parseInt(this.ui.startLevelInput.value) || 1;
+        this.game.start(mode, startLevel);
         this.updateHUDLayout(mode);
     }
 
@@ -491,37 +525,49 @@ class TetrisApp {
         this.showGameOverlay('game-over-screen');
 
         const isWin = this.game.state === 'completed';
-        
+
         // Update game over title (Requirement 5.4)
         this.ui.gameOverTitle.textContent = isWin ? "COMPLETED!" : "GAME OVER";
         this.ui.gameOverTitle.style.color = isWin ? "#4ade80" : "#ff6b6b"; // Green for win, Red for loss
 
-        this.ui.finalScore.textContent = this.game.score;
+        if (this.ui.finalScore) this.ui.finalScore.textContent = this.game.score;
+        if (this.ui.finalLevelVal) this.ui.finalLevelVal.textContent = this.game.level;
+
+        // Show starting level if it was > 1
+        if (this.ui.startLevelDisplay && this.ui.startLevelVal) {
+            const startLevel = this.game.settings.startingLevel || 1;
+            if (startLevel > 1) {
+                this.ui.startLevelVal.textContent = startLevel;
+                this.ui.startLevelDisplay.classList.remove('hidden');
+            } else {
+                this.ui.startLevelDisplay.classList.add('hidden');
+            }
+        }
 
         // Show mode-specific completion stats (Requirements 5.4, 5.5)
         if (isWin) {
             this.ui.completionStats.classList.remove('hidden');
-            
+
             if (this.game.modeType === 'sprint') {
                 // Sprint Mode: Display time and check for personal best
                 const completionTime = this.game.currentMode.elapsedTime;
                 const bestTime = this.game.currentMode.bestTime;
                 const isNewRecord = !bestTime || completionTime < bestTime;
-                
-                this.ui.finalTime.textContent = this.formatTime(completionTime) + 
+
+                this.ui.finalTime.textContent = this.formatTime(completionTime) +
                     (isNewRecord ? ' 🏆 NEW RECORD!' : '');
                 this.ui.finalLines.textContent = this.game.lines + ' lines';
-                
+
             } else if (this.game.modeType === 'marathon') {
                 // Marathon Mode: Display level reached and check for personal best
                 const finalLevel = this.game.level;
                 const highestLevel = this.game.currentMode.highestLevel;
                 const isNewRecord = finalLevel > highestLevel;
-                
-                this.ui.finalTime.textContent = 'Level ' + finalLevel + 
+
+                this.ui.finalTime.textContent = 'Level ' + finalLevel +
                     (isNewRecord ? ' 🏆 NEW RECORD!' : '');
                 this.ui.finalLines.textContent = this.game.lines + ' lines cleared';
-                
+
             } else if (this.game.modeType === 'zen') {
                 // Zen Mode: Display total stats (though Zen doesn't have completion)
                 this.ui.finalTime.textContent = 'Zen Mode';
@@ -857,7 +903,7 @@ class TetrisRenderer {
         gradient.addColorStop(0, `rgba(135, 206, 250, ${alpha})`); // Light sky blue
         gradient.addColorStop(0.5, `rgba(152, 251, 152, ${alpha * 0.7})`); // Pale green
         gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-        
+
         this.ctx.fillStyle = gradient;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
@@ -866,7 +912,7 @@ class TetrisRenderer {
         for (let i = 0; i < waveCount; i++) {
             const waveDelay = i * 0.2;
             const waveProgress = Math.max(0, Math.min(1, (progress - waveDelay) / (1 - waveDelay)));
-            
+
             if (waveProgress > 0) {
                 const waveRadius = waveProgress * this.canvas.width * 0.6;
                 const waveAlpha = (1 - waveProgress) * 0.3;
@@ -882,7 +928,7 @@ class TetrisRenderer {
         // Add calming text overlay
         if (progress < 0.7) {
             const textAlpha = progress < 0.3 ? progress / 0.3 : (progress < 0.5 ? 1 : (0.7 - progress) / 0.2);
-            
+
             this.ctx.save();
             this.ctx.globalAlpha = textAlpha * 0.8;
             this.ctx.fillStyle = 'rgba(255, 255, 255, 1)';

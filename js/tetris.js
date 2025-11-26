@@ -52,12 +52,13 @@ export class TetrisGame {
 
         // Game settings
         this.settings = {
-            showGhost: true,
-            lockDelay: 500,
-            lineClearDelay: 400,
             enableParticles: true,
             enableScreenShake: true,
             effectsIntensity: 1.0,
+            showGhost: true,
+            startingLevel: 1,
+            lockDelay: 500,
+            lineClearDelay: 400,
             maxParticles: 500,
             ...settings // Merge provided settings
         };
@@ -77,14 +78,30 @@ export class TetrisGame {
         }
     }
 
-    start(mode = null) {
-        if (mode) this.setMode(mode);
+    start(mode = 'marathon', startingLevel = 1) {
+        if (this.state === 'playing') return;
+
+        // Set mode
+        this.setMode(mode);
+
+        // Set starting level (clamped 1-15)
+        this.settings.startingLevel = Math.max(1, Math.min(15, startingLevel));
 
         this.reset();
-        this.currentMode.initialize();
         this.state = 'playing';
+
+        // Initialize mode-specific logic
+        if (this.currentMode) {
+            this.currentMode.initialize();
+        }
+
         this.spawnNewPiece();
-        window.soundManager.playBackgroundMusic();
+        this.lastTime = 0;
+
+        // Start background music
+        if (window.soundManager) {
+            window.soundManager.playBackgroundMusic();
+        }
         this.updateMusicTension(); // Initialize music tension
     }
 
@@ -97,7 +114,7 @@ export class TetrisGame {
     reset() {
         this.grid = create2DArray(this.BOARD_WIDTH, this.BOARD_HEIGHT);
         this.score = 0;
-        this.level = 1;
+        this.level = this.settings.startingLevel || 1;
         this.lines = 0;
         this.currentPiece = null;
         this.heldPiece = null;
@@ -406,7 +423,8 @@ export class TetrisGame {
         this.lines += linesCleared; // Update total lines cleared
 
         // Level up every 10 lines
-        const newLevel = Math.floor(this.lines / 10) + 1;
+        const startingLevel = this.settings.startingLevel || 1;
+        const newLevel = Math.floor(this.lines / 10) + startingLevel;
         if (newLevel > this.level) {
             this.level = newLevel;
             this.updateDropSpeed();
@@ -970,4 +988,9 @@ if (typeof window !== 'undefined') {
 // Export for ES modules (testing)
 if (typeof window === 'undefined') {
     globalThis.TetrisGame = TetrisGame;
+}
+
+// Helper function
+function create2DArray(cols, rows) {
+    return Array.from({ length: rows }, () => Array(cols).fill(0));
 }
