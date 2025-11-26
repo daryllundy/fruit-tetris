@@ -1,6 +1,6 @@
 // Main Tetris game logic
 
-class TetrisGame {
+export class TetrisGame {
     constructor() {
         // Game dimensions
         this.BOARD_WIDTH = 10;
@@ -13,7 +13,11 @@ class TetrisGame {
         this.score = 0;
         this.level = 1;
         this.lines = 0;
+        this.lines = 0;
         this.dropTimer = 0;
+        this.dropTimer = 0;
+        this.lastMoveWasRotation = false;
+        this.backToBack = false;
 
         // Fruit combo system
         this.comboMultiplier = 1;
@@ -63,8 +67,8 @@ class TetrisGame {
     }
 
     start() {
-        this.state = 'playing';
         this.reset();
+        this.state = 'playing';
         this.spawnNewPiece();
         window.soundManager.playBackgroundMusic();
         this.updateMusicTension(); // Initialize music tension
@@ -88,6 +92,14 @@ class TetrisGame {
         this.lastComboSize = 0;
         this.totalCombos = 0;
         this.comboHistory = [];
+        this.state = 'menu';
+        this.lastMoveWasRotation = false;
+        this.softDropBonus = 0;
+        this.backToBack = false;
+        
+        // Clear notification states
+        this.comboNotification = null;
+        this.ghostPiece = null;
     }
 
     update(deltaTime) {
@@ -160,13 +172,20 @@ class TetrisGame {
 
         window.soundManager.playPieceLock();
 
+        // Check for T-Spin
+        const tSpin = this.checkTSpin();
+
         // Check for fruit combos before checking lines
         const comboBonus = this.checkFruitCombos();
 
         // Check for completed lines
         const completedLines = this.checkCompletedLines();
-        if (completedLines.length > 0) {
-            this.startLineClear(completedLines, comboBonus);
+
+        // Check for Perfect Clear (if all non-cleared cells are empty)
+        const perfectClear = this.checkPerfectClear(completedLines);
+
+        if (completedLines.length > 0 || tSpin) {
+            this.startLineClear(completedLines, comboBonus, tSpin, perfectClear);
         } else {
             this.spawnNewPiece();
         }
@@ -194,15 +213,21 @@ class TetrisGame {
         return completedLines;
     }
 
-    startLineClear(lines, comboBonus = 0) {
+    startLineClear(lines, comboBonus = 0, tSpin = false, perfectClear = false) {
         this.clearingLines = lines;
         this.clearStartTime = Date.now();
         this.pendingComboBonus = comboBonus;
+        this.pendingTSpin = tSpin;
+        this.pendingPerfectClear = perfectClear;
 
         // Play appropriate sound
-        if (lines.length === 4) {
+        if (perfectClear) {
+            window.soundManager.playPerfectClear();
+        } else if (tSpin) {
+            window.soundManager.playTSpin(); // Assuming a T-Spin specific sound
+        } else if (lines.length === 4) {
             window.soundManager.playTetris(); // 4 lines = Tetris!
-        } else {
+        } else if (lines.length > 0) {
             window.soundManager.playLineClear();
         }
 
@@ -230,16 +255,27 @@ class TetrisGame {
         }
 
         if (this.screenShake && this.settings.enableScreenShake) {
-            // Shake based on lines cleared
-            const intensity = lines.length * 2 * this.settings.effectsIntensity;
-            this.screenShake.shake(intensity, 200);
+            // Shake based on lines cleared or perfect clear
+            let intensity = lines.length * 2 * this.settings.effectsIntensity;
+            if (perfectClear) {
+                intensity = 15 * this.settings.effectsIntensity; // Extra intense for perfect clear
+            }
+            this.screenShake.shake(intensity, perfectClear ? 400 : 200);
         }
 
-        if (this.celebrationManager && lines.length === 4 && this.settings.enableParticles) {
-            this.celebrationManager.triggerTetrisCelebration(
-                this.BOARD_WIDTH * this.BLOCK_SIZE / 2,
-                this.BOARD_HEIGHT * this.BLOCK_SIZE / 2
-            );
+        if (this.celebrationManager && this.settings.enableParticles) {
+            if (perfectClear) {
+                // Epic celebration for perfect clear
+                this.celebrationManager.triggerPerfectClearCelebration(
+                    this.BOARD_WIDTH * this.BLOCK_SIZE / 2,
+                    this.BOARD_HEIGHT * this.BLOCK_SIZE / 2
+                );
+            } else if (lines.length === 4) {
+                this.celebrationManager.triggerTetrisCelebration(
+                    this.BOARD_WIDTH * this.BLOCK_SIZE / 2,
+                    this.BOARD_HEIGHT * this.BLOCK_SIZE / 2
+                );
+            }
         }
     }
 
@@ -253,18 +289,19 @@ class TetrisGame {
             this.grid.unshift(Array(this.BOARD_WIDTH).fill(0));
         });
 
-        // Update score and stats (including combo bonus)
-        this.updateScore(linesCleared, this.pendingComboBonus || 0);
-        this.lines += linesCleared;
+        // Update score and level
+        this.updateScore(linesCleared, this.pendingComboBonus || 0, this.pendingTSpin, this.pendingPerfectClear);
         this.pendingComboBonus = 0;
+        this.pendingTSpin = false; // Reset T-Spin flag
+        this.pendingPerfectClear = false; // Reset Perfect Clear flag
 
-        // Check for level up
-        const newLevel = Math.floor(this.lines / 10) + 1;
-        if (newLevel > this.level) {
-            this.level = newLevel;
-            this.updateDropSpeed();
-            window.soundManager.playLevelUp();
-        }
+        // Check for level up (now handled in updateScore, but keeping this for consistency if needed elsewhere)
+        // const newLevel = Math.floor(this.lines / 10) + 1;
+        // if (newLevel > this.level) {
+        //     this.level = newLevel;
+        //     this.updateDropSpeed();
+        //     window.soundManager.playLevelUp();
+        // }
 
         this.clearingLines = [];
         this.spawnNewPiece();
@@ -273,16 +310,80 @@ class TetrisGame {
         this.updateMusicTension();
     }
 
-    updateScore(linesCleared, comboBonus = 0) {
-        const basePoints = [0, 40, 100, 300, 1200]; // Points for 0-4 lines
-        const linePoints = basePoints[linesCleared] * this.level;
-        const totalPoints = linePoints + this.softDropBonus + comboBonus;
+    updateScore(linesCleared, comboBonus = 0, tSpin = false, perfectClear = false) {
+        let points = 0;
 
-        this.score += totalPoints;
-        this.softDropBonus = 0;
+        // Base points for lines
+        const linePoints = [0, 100, 300, 500, 800]; // Single, Double, Triple, Tetris
+
+        // Check for difficult clear (Tetris or T-Spin)
+        const isDifficult = tSpin || linesCleared === 4;
+        let b2bBonus = false;
+
+        if (isDifficult) {
+            if (this.backToBack) {
+                b2bBonus = true;
+                // 1.5x multiplier for B2B
+            }
+            this.backToBack = true;
+        } else if (linesCleared > 0) {
+            this.backToBack = false;
+        }
+
+        if (tSpin) {
+            // T-Spin scoring
+            const tSpinPoints = [400, 800, 1200, 1600];
+            let tsp = tSpinPoints[linesCleared] * this.level;
+
+            if (b2bBonus) {
+                tsp = Math.floor(tsp * 1.5);
+            }
+
+            points += tsp;
+
+            // Show notification
+            let text = linesCleared === 0 ? "T-SPIN" :
+                linesCleared === 1 ? "T-SPIN SINGLE" :
+                    linesCleared === 2 ? "T-SPIN DOUBLE" : "T-SPIN TRIPLE";
+
+            if (b2bBonus) text = "B2B " + text;
+
+            this.showComboNotification(points, text);
+        } else if (linesCleared > 0) {
+            points += linePoints[linesCleared] * this.level;
+
+            if (b2bBonus) { // Only for Tetris (linesCleared === 4)
+                points = Math.floor(points * 1.5);
+                this.showComboNotification(points, "B2B TETRIS");
+            }
+        }
+
+        if (perfectClear) {
+            // Perfect Clear Bonus (added on top of line clear or T-Spin points)
+            // Single: 800, Double: 1200, Triple: 1800, Tetris: 2000 (multiplied by level)
+            const perfectClearBonus = [0, 800, 1200, 1800, 2000]; // Index by lines cleared
+            const pcBonus = perfectClearBonus[linesCleared] * this.level;
+            points += pcBonus;
+            this.showComboNotification(pcBonus, "PERFECT CLEAR");
+        }
+
+        points += this.softDropBonus; // Add soft drop bonus
+        points += comboBonus;
+        this.score += points;
+        this.softDropBonus = 0; // Reset soft drop bonus
+
+        this.lines += linesCleared; // Update total lines cleared
+
+        // Level up every 10 lines
+        const newLevel = Math.floor(this.lines / 10) + 1;
+        if (newLevel > this.level) {
+            this.level = newLevel;
+            this.updateDropSpeed();
+            window.soundManager.playLevelUp();
+        }
 
         // Show combo notification if applicable
-        if (comboBonus > 0) {
+        if (comboBonus > 0 && !tSpin && !b2bBonus) { // Only show if not T-Spin/B2B (avoid clutter)
             this.showComboNotification(comboBonus);
         }
     }
@@ -302,6 +403,8 @@ class TetrisGame {
 
         if (this.isValidPosition(newX, newY, this.currentPiece.getCurrentShape())) {
             this.currentPiece.move(dx, dy);
+            this.updateGhostPiece();
+            this.lastMoveWasRotation = false;
             if (dx !== 0) window.soundManager.playMove();
             return true;
         }
@@ -322,6 +425,8 @@ class TetrisGame {
             this.currentPiece.setPosition(originalPosition.x + kick.x, originalPosition.y + kick.y);
 
             if (this.isValidPosition(this.currentPiece.position.x, this.currentPiece.position.y, this.currentPiece.getCurrentShape())) {
+                this.updateGhostPiece();
+                this.lastMoveWasRotation = true;
                 window.soundManager.playRotate();
                 return true;
             }
@@ -383,6 +488,7 @@ class TetrisGame {
 
         this.canHold = false;
         this.updateGhostPiece();
+        window.soundManager.playHold();
     }
 
     updateGhostPiece() {
@@ -390,13 +496,51 @@ class TetrisGame {
             this.ghostPiece = null;
             return;
         }
-
         this.ghostPiece = this.currentPiece.clone();
+        const ghostPos = this.currentPiece.getGhostPosition(this);
+        this.ghostPiece.position = ghostPos;
+    }
 
-        // Move ghost piece down until it would collide
-        while (this.isValidPosition(this.ghostPiece.position.x, this.ghostPiece.position.y + 1, this.ghostPiece.getCurrentShape())) {
-            this.ghostPiece.move(0, 1);
+    checkTSpin() {
+        if (!this.currentPiece || this.currentPiece.type !== 'T') return false;
+        if (!this.lastMoveWasRotation) return false;
+
+        const x = this.currentPiece.position.x;
+        const y = this.currentPiece.position.y;
+
+        // Check 4 corners of the 3x3 bounding box
+        // Corners are relative to (x, y): (0,0), (2,0), (0,2), (2,2)
+        let corners = 0;
+
+        // Helper to check if a point is occupied or out of bounds (wall)
+        const isOccupied = (cx, cy) => {
+            // Check bounds
+            if (cx < 0 || cx >= this.BOARD_WIDTH || cy >= this.BOARD_HEIGHT) return true;
+            // Check grid (ignore current piece, but it's not in grid yet)
+            if (cy >= 0 && this.grid[cy][cx] !== 0) return true;
+            return false;
+        };
+
+        if (isOccupied(x, y)) corners++;
+        if (isOccupied(x + 2, y)) corners++;
+        if (isOccupied(x, y + 2)) corners++;
+        if (isOccupied(x + 2, y + 2)) corners++;
+
+        if (corners >= 3) {
+            return { isTSpin: true, isMini: false }; // Simplified: always regular T-Spin for now
         }
+
+        return false;
+    }
+
+    checkPerfectClear(ignoringLines = []) {
+        for (let y = 0; y < this.BOARD_HEIGHT; y++) {
+            if (ignoringLines.includes(y)) continue; // This line will be cleared
+            for (let x = 0; x < this.BOARD_WIDTH; x++) {
+                if (this.grid[y][x] !== 0) return false;
+            }
+        }
+        return true;
     }
 
     isValidPosition(x, y, shape) {
@@ -661,19 +805,20 @@ class TetrisGame {
         }, 5000);
     }
 
-    showComboNotification(comboBonus) {
+    showComboNotification(comboBonus, text = null) {
         // This will be used by the renderer to show combo notifications
         this.comboNotification = {
             bonus: comboBonus,
             size: this.lastComboSize,
             timestamp: Date.now(),
-            multiplier: this.comboMultiplier
+            multiplier: this.comboMultiplier,
+            text: text // Custom text for T-Spin, B2B, etc.
         };
 
-        // Clear notification after 2 seconds
+        // Clear notification after 2.5 seconds (matches renderer duration)
         setTimeout(() => {
             this.comboNotification = null;
-        }, 2000);
+        }, 2500);
     }
 
     // ===== DYNAMIC MUSIC SYSTEM =====
@@ -755,6 +900,11 @@ class TetrisGame {
         };
         return colors[type] || '#FFFFFF';
     }
+}
+
+// Export for browser (when loaded as module)
+if (typeof window !== 'undefined') {
+    window.TetrisGame = TetrisGame;
 }
 
 // Export for ES modules (testing)

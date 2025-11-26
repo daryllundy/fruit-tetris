@@ -197,9 +197,19 @@ class TetrisApp {
         const screens = document.querySelectorAll('.screen');
         screens.forEach(screen => {
             if (screen.id === screenId) {
+                // Fade in the new screen
                 screen.classList.remove('hidden');
+                screen.style.opacity = '0';
+                requestAnimationFrame(() => {
+                    screen.style.transition = 'opacity 0.3s ease';
+                    screen.style.opacity = '1';
+                });
             } else {
-                screen.classList.add('hidden');
+                // Fade out other screens
+                screen.style.opacity = '0';
+                setTimeout(() => {
+                    screen.classList.add('hidden');
+                }, 300);
             }
         });
 
@@ -232,6 +242,11 @@ class TetrisApp {
     updateGameState() {
         // Update UI based on game state
         this.updateUI();
+
+        // Check for perfect clear flash trigger
+        if (this.game.pendingPerfectClear && !this.renderer.perfectClearFlash) {
+            this.renderer.triggerPerfectClearFlash();
+        }
 
         // Store previous state to avoid unnecessary updates
         if (this.previousGameState === this.game.state) {
@@ -287,6 +302,16 @@ class TetrisApp {
         const lastComboElement = document.getElementById('last-combo');
         if (lastComboElement) {
             lastComboElement.textContent = comboStats.lastComboSize > 0 ? comboStats.lastComboSize + ' fruits' : '-';
+        }
+
+        // Update back-to-back indicator
+        const b2bIndicator = document.getElementById('b2b-indicator');
+        if (b2bIndicator) {
+            if (this.game.backToBack) {
+                b2bIndicator.classList.remove('hidden');
+            } else {
+                b2bIndicator.classList.add('hidden');
+            }
         }
     }
 
@@ -353,6 +378,9 @@ class TetrisRenderer {
         this.nextCtx = this.nextCanvas.getContext('2d');
 
         this.blockSize = 30;
+        
+        // Perfect clear flash effect
+        this.perfectClearFlash = null;
 
         // Fruit-themed background colors for different levels
         this.levelBackgrounds = [
@@ -446,6 +474,11 @@ class TetrisRenderer {
             this.drawLineClearEffect();
         }
 
+        // Draw perfect clear flash effect
+        if (this.perfectClearFlash) {
+            this.drawPerfectClearFlash();
+        }
+
         // Draw combo notification
         if (this.game.comboNotification) {
             this.drawComboNotification();
@@ -536,26 +569,95 @@ class TetrisRenderer {
 
     drawLineClearEffect() {
         const progress = (Date.now() - this.game.clearStartTime) / this.game.settings.lineClearDelay;
-        const alpha = Math.sin(progress * Math.PI * 4) * 0.5 + 0.5; // Flashing effect
+        const alpha = Math.sin(progress * Math.PI * 5) * 0.5 + 0.5; // More flashes for better feedback
 
-        this.ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.8})`;
+        // Add color based on number of lines cleared
+        let color = 'rgba(255, 255, 255, ';
+        if (this.game.clearingLines.length === 4) {
+            // Gold for Tetris
+            color = 'rgba(255, 215, 0, ';
+        } else if (this.game.clearingLines.length >= 2) {
+            // Light blue for double/triple
+            color = 'rgba(135, 206, 250, ';
+        }
+
+        this.ctx.fillStyle = color + (alpha * 0.85) + ')';
 
         this.game.clearingLines.forEach(lineY => {
             this.ctx.fillRect(0, lineY * this.blockSize, this.canvas.width, this.blockSize);
+            
+            // Add border effect
+            this.ctx.strokeStyle = color + (alpha * 0.95) + ')';
+            this.ctx.lineWidth = 2;
+            this.ctx.strokeRect(0, lineY * this.blockSize, this.canvas.width, this.blockSize);
         });
+    }
+
+    triggerPerfectClearFlash() {
+        this.perfectClearFlash = {
+            timestamp: Date.now()
+        };
+    }
+
+    drawPerfectClearFlash() {
+        const elapsed = Date.now() - this.perfectClearFlash.timestamp;
+        const duration = 2000; // Extended to 2 seconds for more impact
+        const progress = elapsed / duration;
+
+        if (progress >= 1) {
+            this.perfectClearFlash = null;
+            return;
+        }
+
+        // Create pulsing flash effect with better timing
+        const pulseCount = 4; // More pulses for dramatic effect
+        const pulseProgress = (progress * pulseCount) % 1;
+        const pulseAlpha = Math.sin(pulseProgress * Math.PI) * (1 - progress) * 0.7;
+
+        // Full-screen white flash
+        this.ctx.fillStyle = `rgba(255, 255, 255, ${pulseAlpha})`;
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // Add rainbow glow overlay that cycles through colors
+        const hue = (elapsed * 0.2) % 360;
+        const glowAlpha = (1 - progress) * 0.5;
+        const gradient = this.ctx.createRadialGradient(
+            this.canvas.width / 2, this.canvas.height / 2, 0,
+            this.canvas.width / 2, this.canvas.height / 2, this.canvas.width * 0.8
+        );
+        gradient.addColorStop(0, `hsla(${hue}, 100%, 60%, ${glowAlpha})`);
+        gradient.addColorStop(0.5, `hsla(${(hue + 60) % 360}, 100%, 50%, ${glowAlpha * 0.6})`);
+        gradient.addColorStop(1, 'rgba(255, 215, 0, 0)');
+        this.ctx.fillStyle = gradient;
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // Add expanding ring effect
+        if (progress < 0.5) {
+            const ringProgress = progress / 0.5;
+            const ringRadius = ringProgress * this.canvas.width * 0.8;
+            const ringAlpha = (1 - ringProgress) * 0.6;
+            
+            this.ctx.strokeStyle = `hsla(${hue}, 100%, 70%, ${ringAlpha})`;
+            this.ctx.lineWidth = 4;
+            this.ctx.beginPath();
+            this.ctx.arc(this.canvas.width / 2, this.canvas.height / 2, ringRadius, 0, Math.PI * 2);
+            this.ctx.stroke();
+        }
     }
 
     drawComboNotification() {
         const notification = this.game.comboNotification;
         const elapsed = Date.now() - notification.timestamp;
-        const progress = elapsed / 2000; // 2 second duration
+        const duration = 2500; // Increased to 2.5 seconds for better readability
+        const progress = elapsed / duration;
 
         if (progress >= 1) return; // Notification expired
 
-        // Calculate animation properties
-        const alpha = Math.max(0, 1 - progress);
-        const scale = 1 + (1 - progress) * 0.5; // Start big and shrink
-        const y = this.canvas.height * 0.3 - progress * 50; // Float upward
+        // Calculate animation properties with smoother easing
+        const easeOut = 1 - Math.pow(1 - progress, 3); // Cubic ease-out
+        const alpha = Math.max(0, progress < 0.8 ? 1 : (1 - (progress - 0.8) / 0.2)); // Fade only in last 20%
+        const scale = 1 + (1 - easeOut) * 0.3; // Smoother scale animation
+        const y = this.canvas.height * 0.3 - easeOut * 40; // Smoother float upward
 
         this.ctx.save();
 
@@ -564,28 +666,123 @@ class TetrisRenderer {
         this.ctx.scale(scale, scale);
         this.ctx.globalAlpha = alpha;
 
-        // Background glow
-        this.ctx.fillStyle = `rgba(255, 215, 0, ${alpha * 0.3})`;
-        this.ctx.fillRect(-100, -40, 200, 80);
+        // Determine if this is a special notification (T-Spin, B2B, Perfect Clear)
+        const isSpecial = notification.text && notification.text !== null;
+        const isB2B = notification.text && notification.text.includes('B2B');
+        const isPerfectClear = notification.text && notification.text.includes('PERFECT CLEAR');
+        const isTSpin = notification.text && notification.text.includes('T-SPIN');
+        
+        // Background glow - different color for special notifications
+        if (isPerfectClear) {
+            // Epic rainbow glow for perfect clear
+            const hue = (elapsed * 0.3) % 360;
+            this.ctx.fillStyle = `hsla(${hue}, 100%, 50%, ${alpha * 0.6})`;
+            this.ctx.fillRect(-160, -65, 320, 130);
+            
+            // Add extra sparkle effect with smoother animation
+            const sparkleScale = 1 + Math.sin(elapsed * 0.008) * 0.1;
+            this.ctx.scale(sparkleScale, sparkleScale);
+        } else if (isB2B) {
+            // Red glow for back-to-back
+            this.ctx.fillStyle = `rgba(255, 107, 107, ${alpha * 0.5})`;
+            this.ctx.fillRect(-130, -55, 260, 110);
+            
+            // Add pulsing effect for B2B with smoother animation
+            const pulseScale = 1 + Math.sin(elapsed * 0.006) * 0.08;
+            this.ctx.scale(pulseScale, pulseScale);
+        } else if (isTSpin) {
+            // Purple/magenta glow for T-Spin
+            this.ctx.fillStyle = `rgba(186, 85, 211, ${alpha * 0.5})`;
+            this.ctx.fillRect(-130, -55, 260, 110);
+        } else if (isSpecial) {
+            // Gold glow for other special moves
+            this.ctx.fillStyle = `rgba(255, 215, 0, ${alpha * 0.5})`;
+            this.ctx.fillRect(-130, -55, 260, 110);
+        } else {
+            // Standard glow for fruit combos
+            this.ctx.fillStyle = `rgba(255, 215, 0, ${alpha * 0.4})`;
+            this.ctx.fillRect(-110, -45, 220, 90);
+        }
 
         // Main text
         this.ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
-        this.ctx.font = 'bold 24px Arial';
+        this.ctx.font = isPerfectClear ? 'bold 34px Arial' : 'bold 26px Arial';
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
 
-        // Combo text
-        this.ctx.fillText(`FRUIT COMBO!`, 0, -15);
+        if (isSpecial) {
+            // Show custom text (T-Spin, B2B, Perfect Clear, etc.)
+            if (isPerfectClear) {
+                // Epic styling for perfect clear
+                const hue = (elapsed * 0.3) % 360;
+                this.ctx.fillStyle = `hsla(${hue}, 100%, 70%, ${alpha})`;
+                this.ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
+                this.ctx.lineWidth = 3;
+                this.ctx.strokeText(notification.text, 0, -20);
+                this.ctx.fillText(notification.text, 0, -20);
+                
+                // Add sparkle emoji with animation
+                this.ctx.font = '42px Arial';
+                const sparkleOffset = Math.sin(elapsed * 0.01) * 5;
+                this.ctx.fillText('✨', -85 + sparkleOffset, -20);
+                this.ctx.fillText('✨', 85 - sparkleOffset, -20);
+            } else if (isB2B) {
+                // Special styling for B2B
+                this.ctx.fillStyle = `rgba(255, 107, 107, ${alpha})`;
+                this.ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
+                this.ctx.lineWidth = 2;
+                this.ctx.strokeText(notification.text, 0, -15);
+                this.ctx.fillText(notification.text, 0, -15);
+            } else if (isTSpin) {
+                // Special styling for T-Spin
+                this.ctx.fillStyle = `rgba(186, 85, 211, ${alpha})`;
+                this.ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
+                this.ctx.lineWidth = 2;
+                this.ctx.strokeText(notification.text, 0, -15);
+                this.ctx.fillText(notification.text, 0, -15);
+            } else {
+                this.ctx.fillStyle = `rgba(255, 215, 0, ${alpha})`;
+                this.ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.5})`;
+                this.ctx.lineWidth = 1.5;
+                this.ctx.strokeText(notification.text, 0, -15);
+                this.ctx.fillText(notification.text, 0, -15);
+            }
+        } else {
+            // Standard fruit combo text
+            this.ctx.fillStyle = `rgba(255, 215, 0, ${alpha})`;
+            this.ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.3})`;
+            this.ctx.lineWidth = 1;
+            this.ctx.strokeText(`FRUIT COMBO!`, 0, -15);
+            this.ctx.fillText(`FRUIT COMBO!`, 0, -15);
+        }
 
         // Bonus points
-        this.ctx.font = 'bold 18px Arial';
-        this.ctx.fillStyle = `rgba(255, 215, 0, ${alpha})`;
-        this.ctx.fillText(`+${notification.bonus} points`, 0, 10);
+        this.ctx.font = isPerfectClear ? 'bold 26px Arial' : 'bold 20px Arial';
+        if (isPerfectClear) {
+            const hue = (elapsed * 0.3 + 180) % 360;
+            this.ctx.fillStyle = `hsla(${hue}, 100%, 60%, ${alpha})`;
+            this.ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.8})`;
+            this.ctx.lineWidth = 2;
+            this.ctx.strokeText(`+${notification.bonus} points`, 0, 18);
+            this.ctx.fillText(`+${notification.bonus} points`, 0, 18);
+        } else if (isB2B || isTSpin) {
+            this.ctx.fillStyle = `rgba(255, 215, 0, ${alpha})`;
+            this.ctx.strokeStyle = isB2B ? `rgba(255, 107, 107, ${alpha})` : `rgba(186, 85, 211, ${alpha})`;
+            this.ctx.lineWidth = 1.5;
+            this.ctx.strokeText(`+${notification.bonus} points`, 0, 12);
+            this.ctx.fillStyle = `rgba(255, 215, 0, ${alpha})`;
+            this.ctx.fillText(`+${notification.bonus} points`, 0, 12);
+        } else {
+            this.ctx.fillStyle = `rgba(255, 215, 0, ${alpha})`;
+            this.ctx.fillText(`+${notification.bonus} points`, 0, 12);
+        }
 
-        // Combo size and multiplier
-        this.ctx.font = '14px Arial';
-        this.ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.8})`;
-        this.ctx.fillText(`${notification.size} fruits × ${notification.multiplier.toFixed(1)}x`, 0, 30);
+        // Additional info (combo size/multiplier for fruit combos)
+        if (!isSpecial && notification.size > 0) {
+            this.ctx.font = '16px Arial';
+            this.ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.9})`;
+            this.ctx.fillText(`${notification.size} fruits × ${notification.multiplier.toFixed(1)}x`, 0, 35);
+        }
 
         this.ctx.restore();
     }
@@ -596,7 +793,12 @@ class TetrisRenderer {
         this.holdCtx.fillRect(0, 0, this.holdCanvas.width, this.holdCanvas.height);
 
         if (this.game.heldPiece) {
+            this.holdCtx.save();
+            if (!this.game.canHold) {
+                this.holdCtx.globalAlpha = 0.5; // Dim if cannot hold
+            }
             this.drawPiecePreview(this.holdCtx, this.game.heldPiece, this.holdCanvas.width / 2, this.holdCanvas.height / 2);
+            this.holdCtx.restore();
         }
     }
 

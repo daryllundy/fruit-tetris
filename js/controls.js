@@ -58,25 +58,46 @@ class InputManager {
         Object.entries(buttons).forEach(([id, action]) => {
             const btn = document.getElementById(id);
             if (btn) {
-                // Handle both touch and click events
-                ['touchstart', 'click'].forEach(eventType => {
-                    btn.addEventListener(eventType, (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        
-                        // Add vibration feedback for mobile
-                        if (navigator.vibrate && eventType === 'touchstart') {
-                            navigator.vibrate(20);
+                // Handle touchstart for immediate response
+                btn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Add haptic feedback for mobile
+                    if (navigator.vibrate) {
+                        // Different vibration patterns for different actions
+                        if (id === 'mobile-drop') {
+                            navigator.vibrate([30, 10, 30]); // Double pulse for hard drop
+                        } else if (id === 'mobile-rotate') {
+                            navigator.vibrate(25);
+                        } else {
+                            navigator.vibrate(15);
                         }
-                        
-                        action();
-                        
-                        // Visual feedback
-                        btn.style.transform = 'scale(0.95)';
-                        setTimeout(() => {
-                            btn.style.transform = '';
-                        }, 100);
-                    });
+                    }
+                    
+                    action();
+                    
+                    // Enhanced visual feedback
+                    btn.style.transform = 'scale(0.92)';
+                    btn.style.opacity = '0.8';
+                    setTimeout(() => {
+                        btn.style.transform = '';
+                        btn.style.opacity = '';
+                    }, 120);
+                }, { passive: false });
+                
+                // Handle touchend to reset visual state
+                btn.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    btn.style.transform = '';
+                    btn.style.opacity = '';
+                }, { passive: false });
+                
+                // Fallback for click events (desktop testing)
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    action();
                 });
                 
                 // Prevent long press context menu
@@ -140,29 +161,41 @@ class InputManager {
         // Other keys only work when playing
         if (this.game.state !== 'playing') return;
         
+        let actionSuccess = false;
+        
         switch (key) {
             case 'ArrowLeft':
-                this.game.movePiece(-1, 0);
+                actionSuccess = this.game.movePiece(-1, 0);
                 break;
             case 'ArrowRight':
-                this.game.movePiece(1, 0);
+                actionSuccess = this.game.movePiece(1, 0);
                 break;
             case 'ArrowDown':
-                this.game.softDrop();
+                actionSuccess = this.game.softDrop();
                 break;
             case 'ArrowUp':
             case 'KeyX':
-                this.game.rotatePiece(true); // Clockwise
+                actionSuccess = this.game.rotatePiece(true); // Clockwise
                 break;
             case 'KeyZ':
-                this.game.rotatePiece(false); // Counter-clockwise
+                actionSuccess = this.game.rotatePiece(false); // Counter-clockwise
                 break;
             case 'Space':
                 this.game.hardDrop();
+                actionSuccess = true;
                 break;
             case 'KeyC':
                 this.game.holdPiece();
+                actionSuccess = true;
                 break;
+        }
+        
+        // Visual feedback for successful actions (optional - could add screen flash or other effects)
+        if (actionSuccess && this.game.settings.enableScreenShake) {
+            // Subtle feedback for keyboard actions
+            if (key === 'Space') {
+                // Hard drop gets more feedback (already handled in game logic)
+            }
         }
     }
     
@@ -219,25 +252,39 @@ class InputManager {
         const absX = Math.abs(deltaX);
         const absY = Math.abs(deltaY);
         
-        // Determine gesture type
-        if (absX > this.swipeThreshold || absY > this.swipeThreshold) {
+        // Calculate swipe velocity for better gesture detection
+        const velocity = Math.sqrt(deltaX * deltaX + deltaY * deltaY) / deltaTime;
+        const fastSwipe = velocity > 0.5; // Fast swipe threshold
+        
+        // Determine gesture type with improved detection
+        if (absX > this.swipeThreshold || absY > this.swipeThreshold || fastSwipe) {
             // Swipe gesture
-            if (absX > absY) {
+            if (absX > absY * 0.8) { // Favor horizontal swipes slightly
                 // Horizontal swipe
                 if (deltaX > 0) {
                     this.game.movePiece(1, 0); // Swipe right
+                    if (navigator.vibrate) navigator.vibrate(15);
                 } else {
                     this.game.movePiece(-1, 0); // Swipe left
+                    if (navigator.vibrate) navigator.vibrate(15);
                 }
             } else {
                 // Vertical swipe
                 if (deltaY > 0) {
-                    this.game.softDrop(); // Swipe down
+                    // Swipe down - soft drop or hard drop based on speed
+                    if (fastSwipe && absY > this.swipeThreshold * 1.5) {
+                        this.game.hardDrop(); // Fast swipe down = hard drop
+                        if (navigator.vibrate) navigator.vibrate([30, 10, 30]);
+                    } else {
+                        this.game.softDrop(); // Normal swipe down = soft drop
+                        if (navigator.vibrate) navigator.vibrate(15);
+                    }
                 } else if (deltaY < -this.swipeThreshold) {
                     this.game.rotatePiece(); // Swipe up to rotate
+                    if (navigator.vibrate) navigator.vibrate(20);
                 }
             }
-        } else if (deltaTime < 200 && Date.now() - this.lastTap > this.tapDelay) {
+        } else if (deltaTime < 250 && Date.now() - this.lastTap > this.tapDelay) {
             // Quick tap - determine action based on tap location
             this.handleTap(this.touchStartPos.relativeX, this.touchStartPos.relativeY, canvas);
         }

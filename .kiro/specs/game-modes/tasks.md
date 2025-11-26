@@ -8,7 +8,7 @@
   - Add statistics tracking and display methods
   - _Requirements: 1.1, 2.1, 3.1, 4.2_
 
-- [ ]* 1.1 Write property test for mode initialization
+- [ ] 1.1 Write property test for mode initialization
   - **Property 7: Mode initialization**
   - **Validates: Requirements 4.2**
 
@@ -20,7 +20,7 @@
   - Set fixed drop speed of 500ms
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 6.1_
 
-- [ ]* 2.1 Write property test for personal best persistence
+- [ ] 2.1 Write property test for personal best persistence
   - **Property 1: Personal best time persistence**
   - **Validates: Requirements 1.5**
 
@@ -32,11 +32,11 @@
   - Add highest level persistence to localStorage
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 6.2_
 
-- [ ]* 3.1 Write property test for level progression
+- [ ] 3.1 Write property test for level progression
   - **Property 2: Marathon level progression**
   - **Validates: Requirements 2.2, 2.3**
 
-- [ ]* 3.2 Write property test for spawn collision game over
+- [ ] 3.2 Write property test for spawn collision game over
   - **Property 3: Game over on spawn collision**
   - **Validates: Requirements 2.5**
 
@@ -48,15 +48,15 @@
   - Ensure standard scoring applies
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 6.3_
 
-- [ ]* 4.1 Write property test for Zen mode recovery
+- [ ] 4.1 Write property test for Zen mode recovery
   - **Property 4: Zen mode recovery**
   - **Validates: Requirements 3.2, 3.3**
 
-- [ ]* 4.2 Write property test for Zen mode scoring
+- [ ] 4.2 Write property test for Zen mode scoring
   - **Property 5: Zen mode scoring consistency**
   - **Validates: Requirements 3.4**
 
-- [ ]* 4.3 Write property test for Zen mode state persistence
+- [ ] 4.3 Write property test for Zen mode state persistence
   - **Property 6: Zen mode state persistence**
   - **Validates: Requirements 3.5**
 
@@ -72,7 +72,7 @@
   - Modify `updateDropSpeed()` to respect mode speed settings
   - _Requirements: 1.1, 1.2, 1.3, 2.2, 2.3, 3.2, 4.2_
 
-- [ ]* 5.1 Write property test for mode transition state reset
+- [ ] 5.1 Write property test for mode transition state reset
   - **Property 8: Mode transition state reset**
   - **Validates: Requirements 4.3, 4.5**
 
@@ -99,7 +99,7 @@
   - Update renderer to show mode-specific stats
   - _Requirements: 4.4, 5.1, 5.2, 5.3_
 
-- [ ]* 8.1 Write property test for active mode display
+- [ ] 8.1 Write property test for active mode display
   - **Property 9: Active mode display**
   - **Validates: Requirements 4.4**
 
@@ -112,11 +112,11 @@
   - Style completion screen with celebratory design
   - _Requirements: 5.4, 5.5_
 
-- [ ]* 9.1 Write property test for completion summary
+- [ ] 9.1 Write property test for completion summary
   - **Property 10: Mode completion summary**
   - **Validates: Requirements 5.4**
 
-- [ ]* 9.2 Write property test for completion feedback
+- [ ] 9.2 Write property test for completion feedback
   - **Property 11: Mode completion feedback**
   - **Validates: Requirements 6.4**
 
@@ -150,7 +150,7 @@
   - Test edge cases (localStorage unavailable, rapid mode switching)
   - _Requirements: All_
 
-- [ ]* 14.1 Write unit tests for edge cases
+- [ ] 14.1 Write unit tests for edge cases
   - Test invalid mode type defaults to Marathon
   - Test localStorage unavailable graceful degradation
   - Test Zen mode recovery with insufficient space

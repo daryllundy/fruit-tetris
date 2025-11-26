@@ -259,24 +259,60 @@ export class CelebrationManager {
 
     triggerTetrisCelebration(x, y) {
         // Big explosion for Tetris (4 lines)
-        this.particleSystem.createJuiceSplatter(x, y, '#FFD700', 50); // Gold splatter
-        this.particleSystem.createSparkles(x, y, 20);
-        this.screenShake.shake(10, 500);
+        this.particleSystem.createJuiceSplatter(x, y, '#FFD700', 60); // Gold splatter
+        this.particleSystem.createSparkles(x, y, 30);
+        this.particleSystem.createColorBurst(x, y, 40); // Add color burst for more impact
+        this.screenShake.shake(12, 400);
     }
 
     triggerComboCelebration(x, y, comboCount) {
         // Scale intensity with combo count
-        const intensity = Math.min(comboCount, 10);
+        const intensity = Math.min(comboCount, 12);
 
-        if (comboCount >= 5) {
+        if (comboCount >= 7) {
+            // Very high combo - epic burst
+            this.particleSystem.createColorBurst(x, y, intensity * 10);
+            this.particleSystem.createSparkles(x, y, intensity * 6);
+            this.screenShake.shake(intensity * 2.5, 300);
+        } else if (comboCount >= 5) {
             // High combo - multi-color burst
             this.particleSystem.createColorBurst(x, y, intensity * 8);
+            this.particleSystem.createSparkles(x, y, intensity * 4);
+            this.screenShake.shake(intensity * 2, 250);
         } else {
             // Regular combo - sparkles
-            this.particleSystem.createSparkles(x, y, intensity * 5);
+            this.particleSystem.createSparkles(x, y, intensity * 6);
+            this.screenShake.shake(intensity * 1.5, 200);
         }
+    }
 
-        this.screenShake.shake(intensity * 2, 200);
+    triggerPerfectClearCelebration(x, y) {
+        // Epic celebration for perfect clear - the ultimate achievement!
+        // Multiple waves of particles with staggered timing
+        this.particleSystem.createColorBurst(x, y, 120); // Massive initial burst
+        this.particleSystem.createSparkles(x, y, 60); // Lots of sparkles
+        
+        // Create additional bursts in a circle pattern with better timing
+        for (let i = 0; i < 12; i++) {
+            const angle = (i / 12) * Math.PI * 2;
+            const distance = 90;
+            const burstX = x + Math.cos(angle) * distance;
+            const burstY = y + Math.sin(angle) * distance;
+            
+            setTimeout(() => {
+                this.particleSystem.createColorBurst(burstX, burstY, 25);
+                this.particleSystem.createSparkles(burstX, burstY, 12);
+            }, i * 60);
+        }
+        
+        // Add secondary wave for extra impact
+        setTimeout(() => {
+            this.particleSystem.createColorBurst(x, y, 80);
+            this.particleSystem.createSparkles(x, y, 40);
+        }, 300);
+        
+        // Intense screen shake with longer duration
+        this.screenShake.shake(18, 500);
     }
 }
 

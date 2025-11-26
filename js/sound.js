@@ -54,16 +54,18 @@ class SoundManager {
         try {
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
             
-            // Store generated sounds
+            // Store generated sounds with improved timing and frequencies
             this.generatedSounds = {
-                rotate: this.createBeep(220, 0.1, 'square'),
-                move: this.createBeep(150, 0.05, 'sine'),
-                drop: this.createBeep(100, 0.15, 'sawtooth'),
-                lineClear: this.createBeep(440, 0.3, 'triangle'),
-                levelUp: this.createMelody([262, 330, 392, 523], 0.2),
+                rotate: this.createBeep(240, 0.08, 'square'),
+                move: this.createBeep(160, 0.04, 'sine'),
+                drop: this.createBeep(110, 0.12, 'sawtooth'),
+                lineClear: this.createBeep(480, 0.25, 'triangle'),
+                levelUp: this.createMelody([262, 330, 392, 523], 0.18),
                 gameOver: this.createBeep(80, 1.0, 'sawtooth'),
-                combo: this.createMelody([330, 392, 523, 659], 0.15), // Happy combo sound
-                tetris: this.createMelody([523, 659, 784, 1047], 0.25) // Tetris celebration
+                combo: this.createMelody([349, 440, 554, 698], 0.14), // Happy combo sound (F-A-C#-F)
+                tetris: this.createMelody([523, 659, 784, 1047], 0.22), // Tetris celebration (C-E-G-C)
+                tSpin: this.createMelody([466, 587, 698, 932], 0.16), // T-Spin sound (Bb-D-F-Bb)
+                perfectClear: this.createMelody([523, 659, 784, 1047, 1319, 1568, 2093], 0.16) // Epic perfect clear (C major scale up)
             };
         } catch (error) {
             console.warn('Web Audio API not supported:', error);
@@ -103,8 +105,8 @@ class SoundManager {
             
             frequencies.forEach((freq, index) => {
                 setTimeout(() => {
-                    this.createBeep(freq, noteDuration)();
-                }, index * noteDuration * 1000 * 0.8);
+                    this.createBeep(freq, noteDuration * 0.9)(); // Slightly shorter notes for cleaner sound
+                }, index * noteDuration * 1000 * 0.75); // Faster melody playback
             });
         };
     }
@@ -243,12 +245,14 @@ class SoundManager {
     playTetris() { this.play('tetris'); }
     playLevelUp() { this.play('levelUp'); }
     playGameOver() { this.play('gameOver'); }
+    playTSpin() { this.play('tSpin'); }
+    playPerfectClear() { this.play('perfectClear'); }
     
     // Use existing hit sound for piece locking
     playPieceLock() { this.play('hit'); }
     
-    // Use existing success sound for tetris (4 lines)
-    playTetris() { this.play('success'); }
+    // Use existing success sound for hold
+    playHold() { this.play('hit'); }
 }
 
 // Create global sound manager instance
