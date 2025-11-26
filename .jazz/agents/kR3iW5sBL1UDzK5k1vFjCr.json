@@ -1,0 +1,43 @@
+{
+  "id": "kR3iW5sBL1UDzK5k1vFjCr",
+  "name": "jazz-coder",
+  "model": "openrouter/anthropic/claude-sonnet-4.5",
+  "config": {
+    "environment": {},
+    "agentType": "coder",
+    "llmProvider": "openrouter",
+    "llmModel": "anthropic/claude-sonnet-4.5",
+    "reasoningEffort": "medium",
+    "tools": [
+      "cd",
+      "edit_file",
+      "find",
+      "find_dir",
+      "find_path",
+      "grep",
+      "head",
+      "ls",
+      "mkdir",
+      "pwd",
+      "read_file",
+      "rm",
+      "stat",
+      "tail",
+      "write_file",
+      "execute_command",
+      "git_add",
+      "git_branch",
+      "git_checkout",
+      "git_commit",
+      "git_diff",
+      "git_log",
+      "git_pull",
+      "git_push",
+      "git_status",
+      "http_request",
+      "web_search"
+    ]
+  },
+  "createdAt": "2025-11-26T03:25:10.562Z",
+  "updatedAt": "2025-11-26T03:25:10.562Z"
+}
